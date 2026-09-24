@@ -145,6 +145,10 @@ async def seed_content() -> None:
     await db.packages.create_index("slug", unique=True)
     await db.enquiries.create_index("created_at")
     await db.contact_submissions.create_index("created_at")
+    await db.testimonials.create_index("published")
+    await db.gallery.create_index("published")
+    await db.blog_posts.create_index("slug", unique=True)
+    await db.faqs.create_index([("category", 1), ("sort_order", 1)])
     await db.users.create_index("email", unique=True)
     await db.login_attempts.create_index("identifier")
     await db.password_reset_tokens.create_index("expires_at", expireAfterSeconds=0)
@@ -231,6 +235,31 @@ async def get_package(slug: str) -> Dict[str, Any]:
         raise HTTPException(404, "Package not found")
     package["itinerary"] = await db.package_itineraries.find({"package_id": package["id"]}, {"_id": 0}).sort("day_number", 1).to_list(50)
     return package
+
+
+@api_router.get("/destination-categories")
+async def list_destination_categories() -> List[Dict[str, Any]]:
+    return await db.destination_categories.find({}, {"_id": 0}).sort("name", 1).to_list(50)
+
+
+@api_router.get("/testimonials")
+async def list_testimonials() -> List[Dict[str, Any]]:
+    return await db.testimonials.find({"published": True}, {"_id": 0}).sort("created_at", -1).to_list(100)
+
+
+@api_router.get("/gallery")
+async def list_gallery() -> List[Dict[str, Any]]:
+    return await db.gallery.find({"published": True}, {"_id": 0}).sort("created_at", -1).to_list(100)
+
+
+@api_router.get("/blog-posts")
+async def list_blog_posts() -> List[Dict[str, Any]]:
+    return await db.blog_posts.find({"published": True}, {"_id": 0}).sort("published_at", -1).to_list(100)
+
+
+@api_router.get("/faqs")
+async def list_faqs() -> List[Dict[str, Any]]:
+    return await db.faqs.find({"published": True}, {"_id": 0}).sort([("category", 1), ("sort_order", 1)]).to_list(100)
 
 
 @api_router.post("/enquiries", status_code=201)
