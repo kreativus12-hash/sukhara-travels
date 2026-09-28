@@ -1,0 +1,169 @@
+{
+  "project_title": "Sukhara Travels and Tourism - Secure Admin Panel",
+  "app_type": "admin_dashboard",
+  "design_archetype": "Architectural Precision & Executive Command Center",
+  "theme": "Light Workspace with High-Contrast Navy/Gold Accents",
+  "target_audience": "Travel Operators, Fleet Managers, Travel Consultants",
+  "typography": {
+    "font_family_heading": "Plus Jakarta Sans, sans-serif",
+    "font_family_body": "Inter, sans-serif",
+    "font_family_mono": "JetBrains Mono, monospace",
+    "google_fonts_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap",
+    "hierarchy": {
+      "h1_page_header": "text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight",
+      "h2_section_header": "text-lg sm:text-xl font-bold text-slate-800 tracking-tight",
+      "h3_card_header": "text-base font-semibold text-slate-800",
+      "body_regular": "text-sm text-slate-600 font-normal leading-relaxed",
+      "body_dense": "text-xs text-slate-500 font-normal",
+      "table_header": "text-xs font-semibold uppercase tracking-wider text-slate-500",
+      "table_cell": "text-sm font-medium text-slate-800",
+      "stat_value": "text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-mono",
+      "badge_label": "text-xs font-semibold tracking-wide"
+    }
+  },
+  "colors": {
+    "brand_identity": {
+      "navy_primary": "#0B192C",
+      "navy_deep": "#082A3D",
+      "travel_blue": "#1E3E62",
+      "gold_accent": "#D97706",
+      "gold_hover": "#B45309",
+      "gold_light_bg": "#FEF3C7"
+    },
+    "workspace_neutrals": {
+      "app_bg": "#F8FAFC",
+      "sidebar_bg": "#0B192C",
+      "sidebar_active_bg": "#1E3E62",
+      "card_bg": "#FFFFFF",
+      "border_light": "#E2E8F0",
+      "border_dark": "#334155",
+      "text_main": "#0F172A",
+      "text_muted": "#64748B",
+      "text_inverse": "#FFFFFF"
+    },
+    "status_badges": {
+      "new": {
+        "bg": "bg-amber-50",
+        "text": "text-amber-800",
+        "border": "border-amber-200",
+        "dot": "bg-amber-500"
+      },
+      "contacted": {
+        "bg": "bg-blue-50",
+        "text": "text-blue-800",
+        "border": "border-blue-200",
+        "dot": "bg-blue-500"
+      },
+      "quoted": {
+        "bg": "bg-purple-50",
+        "text": "text-purple-800",
+        "border": "border-purple-200",
+        "dot": "bg-purple-500"
+      },
+      "booked": {
+        "bg": "bg-emerald-50",
+        "text": "text-emerald-800",
+        "border": "border-emerald-200",
+        "dot": "bg-emerald-500"
+      },
+      "closed": {
+        "bg": "bg-slate-100",
+        "text": "text-slate-700",
+        "border": "border-slate-200",
+        "dot": "bg-slate-400"
+      }
+    }
+  },
+  "visual_enhancers": {
+    "card_style": "bg-white border border-slate-200/80 rounded-xl shadow-sm hover:shadow-md transition-all duration-200",
+    "glass_header": "bg-white/90 backdrop-blur-md border-b border-slate-200 sticky top-0 z-40",
+    "sidebar_style": "bg-[#0B192C] text-white flex flex-col h-full border-r border-slate-800 shadow-xl",
+    "login_card": "bg-white/95 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl p-8 max-w-md w-full",
+    "drawer_style": "bg-white border-l border-slate-200 shadow-2xl h-full overflow-y-auto"
+  },
+  "layout_and_grid": {
+    "sidebar_width": "w-64",
+    "sidebar_collapsed": "w-20",
+    "main_container": "flex-1 min-h-screen bg-slate-50 flex flex-col overflow-x-hidden",
+    "content_padding": "p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6",
+    "bento_dashboard_grid": "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6",
+    "table_grid_wrapper": "bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden"
+  },
+  "component_styling": {
+    "sidebar": {
+      "path": "src/components/admin/AdminSidebar.js",
+      "description": "Collapsible vertical navigation with 10 sections: Dashboard, Enquiries, Destinations, Packages, Itineraries, Gallery, Testimonials, FAQs, Blogs, Settings.",
+      "items_style": "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors duration-150",
+      "active_item_style": "flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-semibold text-white bg-[#1E3E62] shadow-sm border-l-4 border-[#D97706]"
+    },
+    "topbar": {
+      "path": "src/components/admin/AdminTopbar.js",
+      "description": "Sticky top bar containing mobile navigation toggle, page title, quick search, quick enquiry badge, admin profile menu, and public website view link.",
+      "style": "h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs"
+    },
+    "data_table": {
+      "path": "src/components/admin/AdminTable.js",
+      "description": "Dense, clean table layout for CRUD management with column sorting, status filters, search input, batch selection, and action buttons.",
+      "header_style": "bg-slate-50 border-b border-slate-200 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider py-3.5 px-4",
+      "row_style": "border-b border-slate-100 hover:bg-slate-50/80 transition-colors duration-150",
+      "pagination_style": "flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200"
+    },
+    "modals_and_drawers": {
+      "modal_style": "fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4",
+      "modal_content": "bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-100",
+      "detail_drawer": "fixed right-0 top-0 bottom-0 z-50 w-full max-w-lg bg-white shadow-2xl border-l border-slate-200 transition-transform duration-300 transform"
+    },
+    "form_elements": {
+      "input": "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1E3E62] focus:ring-2 focus:ring-[#1E3E62]/20 outline-none transition-all",
+      "select": "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 focus:border-[#1E3E62] focus:ring-2 focus:ring-[#1E3E62]/20 outline-none transition-all",
+      "textarea": "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#1E3E62] focus:ring-2 focus:ring-[#1E3E62]/20 outline-none transition-all min-h-[100px]",
+      "label": "block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wide",
+      "button_primary": "bg-[#0B192C] hover:bg-[#1E3E62] text-white font-medium text-sm px-4 py-2 rounded-lg transition-all duration-150 shadow-sm flex items-center justify-center gap-2",
+      "button_secondary": "bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm px-4 py-2 rounded-lg transition-all duration-150 shadow-xs flex items-center justify-center gap-2",
+      "button_gold": "bg-[#D97706] hover:bg-[#B45309] text-white font-semibold text-sm px-4 py-2 rounded-lg transition-all duration-150 shadow-sm flex items-center justify-center gap-2"
+    }
+  },
+  "motion": {
+    "framer_motion_wrapper": "AnimatePresence and motion.div for page transitions and drawer slide-ins",
+    "drawer_transition": "{ initial: { x: '100%' }, animate: { x: 0 }, exit: { x: '100%' }, transition: { type: 'spring', damping: 25, stiffness: 200 } }",
+    "modal_transition": "{ initial: { opacity: 0, scale: 0.95 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.95 }, transition: { duration: 0.15 } }",
+    "list_stagger": "staggerChildren: 0.05"
+  },
+  "image_urls": {
+    "login_backdrop": {
+      "category": "Admin Login Background",
+      "url": "https://images.unsplash.com/photo-1564507592333-c60657eea523?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjB0YWolMjBtYWhhbCUyMGluZGlhJTIwdHJhdmVsJTIwcGhvdG9ncmFwaHl8ZW58MHx8fHwxNzkwNTIyOTYzfDA&ixlib=rb-4.1.0&q=85",
+      "description": "Taj Mahal, Agra - Premium architectural heritage background for login card backdrop overlay."
+    }
+  },
+  "testing_and_accessibility": {
+    "data_testid_convention": "kebab-case, role-based identifiers on all interactive elements",
+    "examples": [
+      "data-testid=\"admin-login-email-input\"",
+      "data-testid=\"admin-login-password-input\"",
+      "data-testid=\"admin-login-submit-button\"",
+      "data-testid=\"admin-sidebar-nav-enquiries\"",
+      "data-testid=\"admin-enquiry-filter-status-new\"",
+      "data-testid=\"admin-enquiry-action-contact-whatsapp\"",
+      "data-testid=\"admin-package-create-button\"",
+      "data-testid=\"admin-settings-save-button\""
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Implement the Secure Admin Panel at /admin route inside React app (using .js / .jsx file extensions).",
+    "Ensure all CRUD operations connect to the FastAPI backend API endpoints and immediately reflect on both admin panel and public site.",
+    "Do NOT alter or break existing public marketing site code or styling.",
+    "Use lucide-react or @heroicons/react for clear operational icons across all 10 sidebar items and action buttons.",
+    "Use sonner for toast notifications on save, create, update, delete, and error events.",
+    "Support full quick actions for enquiries: detail drawer, change status dropdown, admin notes, quick call, email, and WhatsApp trigger links.",
+    "Include a dynamic Itinerary Builder in Package CRUD (add/edit day-by-day title, details, and activity tags).",
+    "Provide responsive mobile drawer for sidebar navigation when viewport width is below lg breakpoint."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "All interactive elements MUST include data-testid attributes for testing.",
+    "Never use dark color gradients; keep solid crisp deep navy backgrounds or clean light slate neutrals.",
+    "Never rely on default transparent background on dropdowns or modals — use opaque or high-opacity backdrop blurs.",
+    "Ensure explicit hover text color on interactive buttons and menu items.",
+    "Use standard JavaScript (.js / .jsx) files for all React components in frontend/src."
+  ]
+}

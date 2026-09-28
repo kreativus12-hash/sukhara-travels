@@ -4,9 +4,10 @@ load_dotenv()
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 import logging
 import os
+import re
 import secrets
 import uuid
 
@@ -14,6 +15,7 @@ import bcrypt
 import jwt
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -27,7 +29,7 @@ ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 JWT_ALGORITHM = "HS256"
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
-app = FastAPI(title="Sukhara Travels API", version="2.0.0")
+app = FastAPI(title="Sukhara Travels API", version="3.0.0")
 api_router = APIRouter(prefix="/api")
 logger = logging.getLogger("sukhara")
 
@@ -155,26 +157,25 @@ async def seed_content() -> None:
     for name, slug, description in [("Domestic Holidays", "domestic-holidays", "Thoughtful journeys across India."), ("International Holidays", "international-holidays", "Beautiful ways to see more of the world."), ("Honeymoon", "honeymoon", "Slow, personal escapes for two.")]:
         await db.destination_categories.update_one({"slug": slug}, {"$setOnInsert": {"id": new_id(), "name": name, "slug": slug, "description": description}}, upsert=True)
     ids: Dict[str, str] = {}
-    for name, country, category, short, full, image, highlights, season, duration in DESTINATION_SEEDS:
-        slug = name.lower().replace(" ", "-")
-        existing = await db.destinations.find_one({"slug": slug}, {"_id": 0})
-        record = base_record({"name": name, "slug": slug, "country": country, "category": category, "short_description": short, "full_description": full, "hero_image": image, "gallery": [image], "highlights": highlights, "best_time_to_visit": season, "recommended_duration": duration, "featured": True, "published": True, "seo_title": f"{name} Holidays | Sukhara Travels", "seo_description": short})
-        if existing:
-            ids[name] = existing["id"]
-            await db.destinations.update_one({"slug": slug}, {"$set": {key: value for key, value in record.items() if key not in {"id", "created_at"}}, "$setOnInsert": {"id": record["id"], "created_at": record["created_at"]}})
-        else:
+    if await db.destinations.count_documents({}) == 0:
+        for name, country, category, short, full, image, highlights, season, duration in DESTINATION_SEEDS:
+            slug = name.lower().replace(" ", "-")
+            record = base_record({"name": name, "slug": slug, "country": country, "category": category, "short_description": short, "full_description": full, "hero_image": image, "gallery": [image], "highlights": highlights, "best_time_to_visit": season, "recommended_duration": duration, "featured": True, "published": True, "seo_title": f"{name} Holidays | Sukhara Travels", "seo_description": short})
             await db.destinations.insert_one(record)
             ids[name] = record["id"]
+    else:
+        async for doc in db.destinations.find({}, {"_id": 0, "name": 1, "id": 1}):
+            ids[doc["name"]] = doc["id"]
     packages = [
         ("Valleys of Kashmir", "Kashmir", "Domestic Holidays", "6 days / 5 nights", "₹42,500", ["Srinagar", "Gulmarg", "Pahalgam"]),
         ("The Bali Edit", "Bali", "International Holidays", "7 days / 6 nights", "₹58,900", ["Ubud", "Nusa Dua", "Seminyak"]),
         ("Blue Horizon Escape", "Maldives", "International Holidays", "4 days / 3 nights", "₹68,500", ["Overwater villa", "Breakfast", "Transfers"]),
         ("Goa, Slowly", "Goa", "Domestic Holidays", "5 days / 4 nights", "₹29,500", ["North Goa", "Old Goa", "Sunset cruise"]),
     ]
-    for title, destination, category, duration, price, highlights in packages:
-        slug = title.lower().replace(" ", "-").replace(",", "")
-        if not await db.packages.find_one({"slug": slug}):
-            package = base_record({"title": title, "slug": slug, "destination_id": ids[destination], "destination": destination, "category": category, "short_description": f"A considered {duration.lower()} journey through {destination}.", "full_description": f"A sample demonstration itinerary for {destination}, designed to show how Sukhara can shape an easy, memorable holiday.", "duration": duration, "starting_price": price, "hero_image": next(item[5] for item in DESTINATION_SEEDS if item[0] == destination), "gallery": [next(item[5] for item in DESTINATION_SEEDS if item[0] == destination)], "highlights": highlights, "inclusions": ["Accommodation as listed", "Daily breakfast", "Private transfers"], "exclusions": ["International flights", "Personal expenses", "Travel insurance"], "featured": True, "published": True, "seo_title": f"{title} | Sukhara Travels", "seo_description": f"Explore the sample {title} itinerary."})
+    if await db.packages.count_documents({}) == 0:
+        for title, destination, category, duration, price, highlights in packages:
+            slug = title.lower().replace(" ", "-").replace(",", "")
+            package = base_record({"title": title, "slug": slug, "destination_id": ids.get(destination, ""), "destination": destination, "category": category, "short_description": f"A considered {duration.lower()} journey through {destination}.", "full_description": f"A sample demonstration itinerary for {destination}, designed to show how Sukhara can shape an easy, memorable holiday.", "duration": duration, "starting_price": price, "hero_image": next(item[5] for item in DESTINATION_SEEDS if item[0] == destination), "gallery": [next(item[5] for item in DESTINATION_SEEDS if item[0] == destination)], "highlights": highlights, "inclusions": ["Accommodation as listed", "Daily breakfast", "Private transfers"], "exclusions": ["International flights", "Personal expenses", "Travel insurance"], "featured": True, "published": True, "seo_title": f"{title} | Sukhara Travels", "seo_description": f"Explore the sample {title} itinerary."})
             await db.packages.insert_one(package)
             for day, day_title in enumerate(["Arrive and settle in", "A day to discover", "The scenic route", "Time to wander", "One last beautiful morning"], 1):
                 await db.package_itineraries.insert_one({"id": new_id(), "package_id": package["id"], "day_number": day, "title": day_title, "description": f"A flexible sample day in {destination}, with space for local experiences and easy moments.", "meals": "Breakfast", "accommodation": "Selected stay", "activities": highlights[:2]})
@@ -274,6 +275,7 @@ async def create_enquiry(payload: EnquiryCreate) -> Dict[str, str]:
 @api_router.post("/contact-submissions", status_code=201)
 async def create_contact_submission(payload: ContactSubmissionCreate) -> Dict[str, str]:
     record = base_record(payload.model_dump())
+    record["status"] = "new"
     await db.contact_submissions.insert_one(record)
     return {"id": record["id"], "message": "Your message has been received."}
 
@@ -290,7 +292,6 @@ async def login(payload: AuthInput, request: Request) -> Dict[str, Any]:
         await db.login_attempts.update_one({"identifier": identifier}, {"$set": {"identifier": identifier, "count": failed, "locked_until": (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat() if failed >= 5 else ""}}, upsert=True)
         raise HTTPException(401, "Invalid email or password")
     await db.login_attempts.delete_one({"identifier": identifier})
-    from fastapi.responses import JSONResponse
     response = JSONResponse({"id": user["id"], "email": user["email"], "name": user["name"], "role": user["role"]})
     set_auth_cookies(response, user["id"], user["email"])
     return response
@@ -301,13 +302,50 @@ async def me(user: Dict[str, Any] = Depends(current_user)) -> Dict[str, Any]:
     return user
 
 
+@api_router.post("/auth/refresh")
+async def refresh_session(request: Request) -> Dict[str, str]:
+    token = request.cookies.get("refresh_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid token type")
+    except jwt.ExpiredSignatureError as exc:
+        raise HTTPException(status_code=401, detail="Session expired. Please sign in again.") from exc
+    except jwt.InvalidTokenError as exc:
+        raise HTTPException(status_code=401, detail="Invalid token") from exc
+    user = await db.users.find_one({"id": payload.get("sub")})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    response = JSONResponse({"message": "Session refreshed"})
+    response.set_cookie("access_token", create_token(user["id"], user["email"], "access", timedelta(minutes=15)), httponly=True, secure=True, samesite="none", max_age=900, path="/")
+    return response
+
+
 @api_router.post("/auth/logout")
 async def logout() -> Dict[str, str]:
-    from fastapi.responses import JSONResponse
     response = JSONResponse({"message": "Logged out"})
     response.delete_cookie("access_token", path="/")
     response.delete_cookie("refresh_token", path="/")
     return response
+
+
+# ---------------- Admin: dashboard & enquiry management ----------------
+
+ENQUIRY_STATUS_VALUES = {"new", "contacted", "quoted", "booked", "closed"}
+CONTACT_STATUS_VALUES = {"new", "read", "replied"}
+
+
+@api_router.get("/admin/stats")
+async def admin_stats(_: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    tracked = {"destinations": db.destinations, "packages": db.packages, "enquiries": db.enquiries, "testimonials": db.testimonials, "faqs": db.faqs, "gallery": db.gallery, "blog_posts": db.blog_posts, "contact_submissions": db.contact_submissions}
+    counts = {name: await collection.count_documents({}) for name, collection in tracked.items()}
+    counts["new_enquiries"] = await db.enquiries.count_documents({"status": "new"})
+    counts["new_contacts"] = await db.contact_submissions.count_documents({"status": {"$ne": "read"}})
+    recent_enquiries = await db.enquiries.find({}, {"_id": 0}).sort("created_at", -1).to_list(6)
+    recent_contacts = await db.contact_submissions.find({}, {"_id": 0}).sort("created_at", -1).to_list(3)
+    return {"counts": counts, "recent_enquiries": recent_enquiries, "recent_contacts": recent_contacts}
 
 
 @api_router.get("/admin/enquiries")
@@ -315,9 +353,316 @@ async def admin_enquiries(_: Dict[str, Any] = Depends(admin_user)) -> List[Dict[
     return await db.enquiries.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
 
 
+class EnquiryUpdate(BaseModel):
+    status: Optional[str] = None
+    admin_notes: Optional[str] = None
+
+
+@api_router.patch("/admin/enquiries/{item_id}")
+async def admin_update_enquiry(item_id: str, payload: EnquiryUpdate, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    data = {key: value for key, value in payload.model_dump().items() if value is not None}
+    if "status" in data and data["status"] not in ENQUIRY_STATUS_VALUES:
+        raise HTTPException(422, "Invalid status")
+    if not data:
+        raise HTTPException(422, "Nothing to update")
+    data["updated_at"] = now_iso()
+    result = await db.enquiries.update_one({"id": item_id}, {"$set": data})
+    if not result.matched_count:
+        raise HTTPException(404, "Enquiry not found")
+    return public_doc(await db.enquiries.find_one({"id": item_id}, {"_id": 0}))
+
+
+@api_router.delete("/admin/enquiries/{item_id}")
+async def admin_delete_enquiry(item_id: str, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, str]:
+    result = await db.enquiries.delete_one({"id": item_id})
+    if not result.deleted_count:
+        raise HTTPException(404, "Enquiry not found")
+    return {"message": "Deleted"}
+
+
 @api_router.get("/admin/contact-submissions")
 async def admin_contacts(_: Dict[str, Any] = Depends(admin_user)) -> List[Dict[str, Any]]:
     return await db.contact_submissions.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+class ContactUpdate(BaseModel):
+    status: Optional[str] = None
+
+
+@api_router.patch("/admin/contact-submissions/{item_id}")
+async def admin_update_contact(item_id: str, payload: ContactUpdate, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    data = {key: value for key, value in payload.model_dump().items() if value is not None}
+    if "status" in data and data["status"] not in CONTACT_STATUS_VALUES:
+        raise HTTPException(422, "Invalid status")
+    if not data:
+        raise HTTPException(422, "Nothing to update")
+    data["updated_at"] = now_iso()
+    result = await db.contact_submissions.update_one({"id": item_id}, {"$set": data})
+    if not result.matched_count:
+        raise HTTPException(404, "Submission not found")
+    return public_doc(await db.contact_submissions.find_one({"id": item_id}, {"_id": 0}))
+
+
+@api_router.delete("/admin/contact-submissions/{item_id}")
+async def admin_delete_contact(item_id: str, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, str]:
+    result = await db.contact_submissions.delete_one({"id": item_id})
+    if not result.deleted_count:
+        raise HTTPException(404, "Submission not found")
+    return {"message": "Deleted"}
+
+
+# ---------------- Admin: content management ----------------
+
+def slugify(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug or secrets.token_hex(4)
+
+
+async def unique_slug(collection: Any, base: str, exclude_id: Optional[str] = None) -> str:
+    candidate, counter = base, 2
+    while True:
+        query: Dict[str, Any] = {"slug": candidate}
+        if exclude_id:
+            query["id"] = {"$ne": exclude_id}
+        if not await collection.find_one(query, {"_id": 1}):
+            return candidate
+        candidate = f"{base}-{counter}"
+        counter += 1
+
+
+class DestinationInput(BaseModel):
+    name: str = Field(min_length=2, max_length=140)
+    slug: Optional[str] = None
+    country: str = ""
+    category: str = ""
+    short_description: str = ""
+    full_description: str = ""
+    hero_image: str = ""
+    gallery: List[str] = Field(default_factory=list)
+    highlights: List[str] = Field(default_factory=list)
+    best_time_to_visit: str = ""
+    recommended_duration: str = ""
+    featured: bool = False
+    published: bool = True
+    seo_title: str = ""
+    seo_description: str = ""
+
+
+class TestimonialInput(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+    location: str = ""
+    trip: str = ""
+    quote: str = ""
+    rating: int = Field(default=5, ge=1, le=5)
+    published: bool = True
+
+
+class FaqInput(BaseModel):
+    question: str = Field(min_length=2, max_length=300)
+    answer: str = ""
+    category: str = "General"
+    sort_order: int = 0
+    published: bool = True
+
+
+class GalleryInput(BaseModel):
+    title: str = Field(min_length=2, max_length=160)
+    image_url: str = Field(min_length=5)
+    category: str = ""
+    published: bool = True
+
+
+class BlogInput(BaseModel):
+    title: str = Field(min_length=2, max_length=200)
+    slug: Optional[str] = None
+    excerpt: str = ""
+    content: str = ""
+    cover_image: str = ""
+    published: bool = False
+
+
+def blog_hook(data: Dict[str, Any], existing: Optional[Dict[str, Any]]) -> None:
+    if data.get("published"):
+        data["published_at"] = (existing or {}).get("published_at") or now_iso()
+    else:
+        data["published_at"] = None
+
+
+def register_crud(resource: str, collection: Any, model: Any, *, slug_source: Optional[str] = None, sort: Optional[List[Any]] = None, hook: Optional[Callable[[Dict[str, Any], Optional[Dict[str, Any]]], None]] = None) -> None:
+    async def list_items(_: Dict[str, Any] = Depends(admin_user)) -> List[Dict[str, Any]]:
+        cursor = collection.find({}, {"_id": 0})
+        if sort:
+            cursor = cursor.sort(sort)
+        return await cursor.to_list(500)
+
+    async def create_item(payload: model, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+        data = payload.model_dump()
+        if slug_source:
+            data["slug"] = await unique_slug(collection, slugify(data.get("slug") or data[slug_source]))
+        if hook:
+            hook(data, None)
+        record = base_record(data)
+        await collection.insert_one(record)
+        return public_doc(record)
+
+    async def update_item(item_id: str, payload: model, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+        existing = await collection.find_one({"id": item_id}, {"_id": 0})
+        if not existing:
+            raise HTTPException(404, "Item not found")
+        data = payload.model_dump()
+        if slug_source:
+            data["slug"] = await unique_slug(collection, slugify(data.get("slug") or data[slug_source]), exclude_id=item_id)
+        if hook:
+            hook(data, existing)
+        data["updated_at"] = now_iso()
+        await collection.update_one({"id": item_id}, {"$set": data})
+        return public_doc(await collection.find_one({"id": item_id}, {"_id": 0}))
+
+    async def delete_item(item_id: str, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, str]:
+        result = await collection.delete_one({"id": item_id})
+        if not result.deleted_count:
+            raise HTTPException(404, "Item not found")
+        return {"message": "Deleted"}
+
+    api_router.get(f"/admin/{resource}", name=f"admin-{resource}-list")(list_items)
+    api_router.post(f"/admin/{resource}", status_code=201, name=f"admin-{resource}-create")(create_item)
+    api_router.put(f"/admin/{resource}/{{item_id}}", name=f"admin-{resource}-update")(update_item)
+    api_router.delete(f"/admin/{resource}/{{item_id}}", name=f"admin-{resource}-delete")(delete_item)
+
+
+register_crud("destinations", db.destinations, DestinationInput, slug_source="name", sort=[("name", 1)])
+register_crud("testimonials", db.testimonials, TestimonialInput, sort=[("created_at", -1)])
+register_crud("faqs", db.faqs, FaqInput, sort=[("category", 1), ("sort_order", 1)])
+register_crud("gallery", db.gallery, GalleryInput, sort=[("created_at", -1)])
+register_crud("blog-posts", db.blog_posts, BlogInput, slug_source="title", sort=[("created_at", -1)], hook=blog_hook)
+
+
+# ---------------- Admin: packages & itineraries ----------------
+
+class ItineraryDayInput(BaseModel):
+    day_number: int = Field(default=1, ge=1, le=60)
+    title: str = ""
+    description: str = ""
+    meals: str = ""
+    accommodation: str = ""
+    activities: List[str] = Field(default_factory=list)
+
+
+class PackageInput(BaseModel):
+    title: str = Field(min_length=2, max_length=160)
+    slug: Optional[str] = None
+    destination_id: Optional[str] = None
+    destination: str = ""
+    category: str = ""
+    short_description: str = ""
+    full_description: str = ""
+    duration: str = ""
+    starting_price: str = ""
+    hero_image: str = ""
+    gallery: List[str] = Field(default_factory=list)
+    highlights: List[str] = Field(default_factory=list)
+    inclusions: List[str] = Field(default_factory=list)
+    exclusions: List[str] = Field(default_factory=list)
+    featured: bool = False
+    published: bool = True
+    seo_title: str = ""
+    seo_description: str = ""
+    itinerary: List[ItineraryDayInput] = Field(default_factory=list)
+
+
+async def save_itinerary(package_id: str, days: List[Dict[str, Any]]) -> None:
+    await db.package_itineraries.delete_many({"package_id": package_id})
+    for index, day in enumerate(days, 1):
+        await db.package_itineraries.insert_one({"id": new_id(), "package_id": package_id, "day_number": index, "title": day.get("title", ""), "description": day.get("description", ""), "meals": day.get("meals", ""), "accommodation": day.get("accommodation", ""), "activities": day.get("activities", [])})
+
+
+async def resolve_destination_name(data: Dict[str, Any]) -> None:
+    if data.get("destination_id") and not data.get("destination"):
+        destination = await db.destinations.find_one({"id": data["destination_id"]}, {"_id": 0, "name": 1})
+        if destination:
+            data["destination"] = destination["name"]
+
+
+@api_router.get("/admin/packages")
+async def admin_list_packages(_: Dict[str, Any] = Depends(admin_user)) -> List[Dict[str, Any]]:
+    return await db.packages.find({}, {"_id": 0}).sort("title", 1).to_list(500)
+
+
+@api_router.get("/admin/packages/{item_id}")
+async def admin_get_package(item_id: str, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    package = await db.packages.find_one({"id": item_id}, {"_id": 0})
+    if not package:
+        raise HTTPException(404, "Package not found")
+    package["itinerary"] = await db.package_itineraries.find({"package_id": item_id}, {"_id": 0}).sort("day_number", 1).to_list(100)
+    return package
+
+
+@api_router.post("/admin/packages", status_code=201)
+async def admin_create_package(payload: PackageInput, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    data = payload.model_dump()
+    itinerary = [day for day in data.pop("itinerary")]
+    data["slug"] = await unique_slug(db.packages, slugify(data.get("slug") or data["title"]))
+    await resolve_destination_name(data)
+    record = base_record(data)
+    await db.packages.insert_one(record)
+    await save_itinerary(record["id"], itinerary)
+    return public_doc(record)
+
+
+@api_router.put("/admin/packages/{item_id}")
+async def admin_update_package(item_id: str, payload: PackageInput, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    existing = await db.packages.find_one({"id": item_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(404, "Package not found")
+    data = payload.model_dump()
+    itinerary = [day for day in data.pop("itinerary")]
+    data["slug"] = await unique_slug(db.packages, slugify(data.get("slug") or data["title"]), exclude_id=item_id)
+    await resolve_destination_name(data)
+    data["updated_at"] = now_iso()
+    await db.packages.update_one({"id": item_id}, {"$set": data})
+    await save_itinerary(item_id, itinerary)
+    return public_doc(await db.packages.find_one({"id": item_id}, {"_id": 0}))
+
+
+@api_router.delete("/admin/packages/{item_id}")
+async def admin_delete_package(item_id: str, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, str]:
+    result = await db.packages.delete_one({"id": item_id})
+    if not result.deleted_count:
+        raise HTTPException(404, "Package not found")
+    await db.package_itineraries.delete_many({"package_id": item_id})
+    return {"message": "Deleted"}
+
+
+# ---------------- Admin: website settings ----------------
+
+class SettingsInput(BaseModel):
+    company_name: Optional[str] = None
+    logo: Optional[str] = None
+    favicon: Optional[str] = None
+    phone: Optional[str] = None
+    whatsapp: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    map_url: Optional[str] = None
+    instagram: Optional[str] = None
+    facebook: Optional[str] = None
+    youtube: Optional[str] = None
+    business_hours: Optional[str] = None
+    default_seo_title: Optional[str] = None
+    default_seo_description: Optional[str] = None
+
+
+@api_router.get("/admin/settings")
+async def admin_get_settings(_: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    return public_doc(await db.website_settings.find_one({"id": "main"}, {"_id": 0}) or {})
+
+
+@api_router.put("/admin/settings")
+async def admin_save_settings(payload: SettingsInput, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    data = {key: value for key, value in payload.model_dump().items() if value is not None}
+    data["updated_at"] = now_iso()
+    await db.website_settings.update_one({"id": "main"}, {"$set": data, "$setOnInsert": {"id": "main"}}, upsert=True)
+    return public_doc(await db.website_settings.find_one({"id": "main"}, {"_id": 0}))
 
 
 app.include_router(api_router)

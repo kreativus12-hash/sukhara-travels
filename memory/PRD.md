@@ -1,43 +1,43 @@
-# Sukhara Travels and Tourism — Public Website Foundation
+# Sukhara Travels and Tourism — PRD
 
 ## Original problem statement
-Build a complete professional travel and tourism website for Sukhara Travels and Tourism, starting with only the polished public-facing website foundation and homepage. The homepage should include responsive navigation, premium hero, quick trip planner, destinations, featured packages, Why Sukhara, travel categories, customized-trip CTA, inspiration, sample-safe testimonials, final CTA, footer, WhatsApp links, and realistic travel content. Do not build admin, authentication, database, CMS, payments, or booking APIs in this stage.
+Build a complete professional travel and tourism website for Sukhara Travels and Tourism (sukharatravels.com), an Indian travel agency and tour operator (domestic + international holidays, customized trips, honeymoon, family, group/corporate). Real functional business website, staged delivery: Stage 1 public homepage, Stage 2 backend + DB integration, Stage 3 secure admin panel. Premium brand: deep navy, travel blue, orange/gold accents; no generic template look; public site must never be broken by later stages.
 
-## Architecture decisions
-- React single-page homepage using reusable in-file components for Navbar, Brand, Planner, section headings, destination cards, package cards, and Footer.
-- CSS-first responsive design with a navy, travel-blue, warm-gold, and warm-off-white visual system; DM Sans and DM Serif Display provide the brand typography.
-- Frontend-only planner state for this stage; field structure and CTA are ready to connect to enquiry storage later.
-- Remote editorial travel photography is used for the foundation; the temporary text brand mark can be replaced by the supplied logo later.
-- Contact details are intentionally editable sample values, including the WhatsApp number and email.
-- MongoDB collections use UUID string identifiers to keep API responses JSON-safe and avoid leaking BSON ObjectIds.
-- Public APIs only query `published` records and featured homepage APIs additionally require `featured=true`.
-- Website settings are the single source for phone, email, address, WhatsApp, and social configuration.
-- Admin security foundation uses environment-seeded bcrypt credentials, short-lived JWT access cookies, refresh cookies, login lockout tracking, and protected `/api/admin/*` routes. The content-management UI remains deferred.
+## Architecture
+- React frontend (CRA/craco, Tailwind + custom CSS), FastAPI backend (MongoDB Motor), JWT auth via HttpOnly cookies (15-min access + 7-day refresh).
+- Public routes: `/`, `/destinations/:slug`, `/packages/:slug` — all DB-driven.
+- Admin app: `/admin/*` — isolated React sub-app (`src/admin/`), own layout/sidebar/design system; public code untouched.
+- Backend: `/api/*` public routes; `/api/admin/*` protected by admin role dependency; generic CRUD factory + custom package/itinerary endpoints.
+
+## User personas
+- Prospective traveller: browses destinations/packages, submits trip enquiries, WhatsApps the agency.
+- Admin (business owner): manages all website content, triages enquiries, updates settings.
+
+## Core requirements (static)
+Public marketing site, DB-driven content, enquiry capture, secure admin CMS for destinations/packages/itineraries/gallery/testimonials/FAQs/blog/enquiries/contacts/settings, WhatsApp integration, responsive everywhere.
 
 ## Implemented
-- Full responsive navigation with desktop links, mobile hamburger menu, WhatsApp CTA, and Plan Your Trip CTA.
-- Hero with branded copy, aspirational travel image, CTAs, and scroll cue.
-- Quick trip planner with destination, date, traveller count, holiday type, budget, and confirmation state.
-- Eight destination cards: Goa, Kashmir, Kerala, Rajasthan, Dubai, Bali, Maldives, and Thailand.
-- Three sample package cards with durations, starting prices, highlights, view, and enquiry actions.
-- Why Sukhara editorial section with four support principles and no unsupported claims.
-- Eight travel category cards, customized-trip CTA, inspiration editorial cards, explicitly marked SAMPLE/DEMO testimonial, final CTA, and premium footer.
-- Branded HTML title, description, and theme color.
-- Verified desktop/mobile rendering, image loading, no horizontal overflow, planner interaction, navigation, CTA anchors, and no console errors.
-- Added MongoDB collections and indexes for destination categories, destinations, packages, package itineraries, enquiries, testimonials, gallery, blog posts, FAQs, contact submissions, website settings, users, login attempts, and password reset tokens.
-- Added public APIs for settings, categories, destinations, packages, testimonials, gallery, blog posts, and FAQs, plus enquiry/contact submission APIs.
-- Added reusable `/destinations/:slug` and `/packages/:slug` pages with related packages, itinerary, inclusions/exclusions, gallery, enquiry CTA, and centralized WhatsApp CTA.
-- Added `/admin` protected-workspace boundary and JWT login foundation without exposing content management to public visitors.
-- Stage-two regression: backend 4/4 checks and frontend 8/8 targeted checks passed; no mocked APIs or unresolved issues.
+- 2026-09 (Stage 1): Premium public homepage — hero, trip planner form, destinations, packages, why-us, categories, CTAs, inspiration, footer. Fully responsive.
+- 2026-09 (Stage 2): FastAPI + MongoDB; schemas for destinations, packages, itineraries, enquiries, contacts, settings; seed data; public pages wired to DB; enquiry + contact forms persist; JWT cookie auth with brute-force lockout + admin seed.
+- 2026-09-28 (Stage 3): Secure admin panel at `/admin`:
+  - Login screen, protected routes, auto session refresh (`/api/auth/refresh`), logout.
+  - Dashboard: 8 live stat cards, recent enquiries, recent contact messages, quick actions.
+  - Enquiries: status filters, search, detail drawer, status + internal notes, quick call/WhatsApp/email, delete.
+  - Contact messages: list, view modal, read/replied status, delete, quick actions.
+  - Destinations, Testimonials, FAQs, Gallery, Blog: full CRUD (generic engine) with publish/featured toggles.
+  - Packages: full CRUD + day-by-day itinerary builder (add/remove/reorder days, meals/stay/activities).
+  - Website settings: brand, contact, social, SEO — live on public site instantly.
+  - Backend: all `/api/admin/*` CRUD endpoints, stats endpoint, seed fix (no longer reverts admin edits on restart).
 
-## Prioritized backlog
-- P0: Replace temporary text brand mark and sample contact details with the final logo, phone, WhatsApp, email, and address.
-- P1: Build the authenticated admin content-management UI for destinations, packages, enquiries, and settings.
-- P1: Add admin CRUD APIs and validation for blog, gallery, testimonials, FAQs, and package itineraries.
-- P2: Add real testimonial, blog, gallery, FAQ, and settings content; remove clearly marked demo content when supplied.
-- P2: Add enquiry status updates, admin notes, filtering, and export workflows.
+## Verified
+- All admin endpoints via curl (CRUD round-trips, public sync, 401 without auth).
+- Browser flows: login → dashboard → enquiry status change (persisted, badge updated) → package editor with 5-day itinerary → settings → logout → login screen. Mobile 375px hamburger sidebar. UI testimonial create/delete. Public homepage intact (8 destinations, 4 packages).
 
-## Next tasks
-- Add the supplied logo and final business settings.
-- Build the admin dashboard on top of the protected route and seeded JWT foundation.
-- Add authenticated content editing and publishing workflows.
+## Backlog (prioritized)
+- P1: Public pages/sections rendering admin-managed testimonials, FAQs, gallery, blog posts (currently admin-managed but not shown publicly).
+- P1: Logo from settings used in public navbar/footer (currently text brand mark).
+- P2: Enquiry email notifications (Resend) on new enquiry.
+- P2: Admin password change inside settings.
+- P2: Blog public pages (`/blog`, `/blog/:slug`).
+- P2: Image upload to object storage instead of URL paste.
+- P3: Forgot/reset password flow (endpoints scaffolded in playbook).
