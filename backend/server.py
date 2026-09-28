@@ -29,7 +29,7 @@ ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 JWT_ALGORITHM = "HS256"
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
-app = FastAPI(title="Sukhara Travels API", version="3.0.0")
+app = FastAPI(title="Sukhara Travels API", version="4.0.0")
 api_router = APIRouter(prefix="/api")
 logger = logging.getLogger("sukhara")
 
@@ -104,12 +104,14 @@ class AuthInput(BaseModel):
 
 class EnquiryCreate(BaseModel):
     name: str = Field(min_length=2, max_length=120)
-    phone: str = Field(min_length=5, max_length=40)
+    phone: str = Field(min_length=5, max_length=40, pattern=r"^[0-9+\-\s()]+$")
     email: Optional[EmailStr] = None
     destination: Optional[str] = None
     package_id: Optional[str] = None
     travel_date: Optional[str] = None
     travellers: Optional[str] = None
+    adults: Optional[str] = Field(default=None, max_length=10)
+    children: Optional[str] = Field(default=None, max_length=10)
     budget: Optional[str] = None
     holiday_type: Optional[str] = None
     message: Optional[str] = None
@@ -187,9 +189,28 @@ async def seed_content() -> None:
         await db.users.update_one({"email": ADMIN_EMAIL}, {"$set": {"password_hash": hash_password(ADMIN_PASSWORD)}})
 
 
+async def migrate_enquiries() -> None:
+    await db.enquiries.update_many({"status": "quoted"}, {"$set": {"status": "quotation-sent"}})
+    await db.enquiries.update_many({"status": "booked"}, {"$set": {"status": "confirmed"}})
+    missing = db.enquiries.find({"$or": [{"lead_id": {"$exists": False}}, {"notes": {"$exists": False}}, {"timeline": {"$exists": False}}]}).sort("created_at", 1)
+    sequence = await db.enquiries.count_documents({"lead_id": {"$exists": True}})
+    year = datetime.now(timezone.utc).year
+    async for doc in missing:
+        sequence += 1
+        updates: Dict[str, Any] = {}
+        if "lead_id" not in doc:
+            updates["lead_id"] = f"ST-{year}-{sequence:04d}"
+        if "notes" not in doc:
+            updates["notes"] = ([{"id": new_id(), "text": doc["admin_notes"], "created_at": doc.get("updated_at") or doc["created_at"], "by": "Admin"}] if doc.get("admin_notes") else [])
+        if "timeline" not in doc:
+            updates["timeline"] = [{"event": "Enquiry created", "at": doc["created_at"], "by": "Website"}]
+        await db.enquiries.update_one({"id": doc["id"]}, {"$set": updates})
+
+
 @app.on_event("startup")
 async def startup() -> None:
     await seed_content()
+    await migrate_enquiries()
 
 
 @api_router.get("/")
@@ -265,11 +286,28 @@ async def list_faqs() -> List[Dict[str, Any]]:
 
 @api_router.post("/enquiries", status_code=201)
 async def create_enquiry(payload: EnquiryCreate) -> Dict[str, str]:
-    record = base_record(payload.model_dump())
+    data = payload.model_dump()
+    if data.get("package_id"):
+        package = await db.packages.find_one({"id": data["package_id"]}, {"_id": 0, "title": 1, "destination": 1})
+        if package:
+            data["package_title"] = package["title"]
+            if not data.get("destination"):
+                data["destination"] = package.get("destination", "")
+    duplicate_checks: List[Dict[str, Any]] = [{"phone": data["phone"]}]
+    if data.get("email"):
+        duplicate_checks.append({"email": data["email"]})
+    duplicate = await db.enquiries.find_one({"$or": duplicate_checks}, {"_id": 0, "id": 1})
+    record = base_record(data)
+    record["lead_id"] = f"ST-{datetime.now(timezone.utc).year}-{await db.enquiries.count_documents({}) + 1:04d}"
     record["status"] = "new"
     record["admin_notes"] = ""
+    record["notes"] = []
+    record["follow_up_date"] = ""
+    record["follow_up_note"] = ""
+    record["possible_duplicate"] = bool(duplicate)
+    record["timeline"] = [{"event": "Enquiry created", "at": record["created_at"], "by": "Website"}]
     await db.enquiries.insert_one(record)
-    return {"id": record["id"], "message": "Your enquiry has been received."}
+    return {"id": record["id"], "lead_id": record["lead_id"], "message": "Your enquiry has been received."}
 
 
 @api_router.post("/contact-submissions", status_code=201)
@@ -333,7 +371,10 @@ async def logout() -> Dict[str, str]:
 
 # ---------------- Admin: dashboard & enquiry management ----------------
 
-ENQUIRY_STATUS_VALUES = {"new", "contacted", "quoted", "booked", "closed"}
+ENQUIRY_STATUS_VALUES = {"new", "contacted", "follow-up", "quotation-sent", "confirmed", "closed", "lost"}
+ENQUIRY_STATUS_LABELS = {"new": "New", "contacted": "Contacted", "follow-up": "Follow-up", "quotation-sent": "Quotation Sent", "confirmed": "Confirmed", "closed": "Closed", "lost": "Lost"}
+ENQUIRY_STATUS_ORDER = ["new", "contacted", "follow-up", "quotation-sent", "confirmed", "closed", "lost"]
+TERMINAL_STATUSES = {"closed", "confirmed", "lost"}
 CONTACT_STATUS_VALUES = {"new", "read", "replied"}
 
 
@@ -341,11 +382,18 @@ CONTACT_STATUS_VALUES = {"new", "read", "replied"}
 async def admin_stats(_: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
     tracked = {"destinations": db.destinations, "packages": db.packages, "enquiries": db.enquiries, "testimonials": db.testimonials, "faqs": db.faqs, "gallery": db.gallery, "blog_posts": db.blog_posts, "contact_submissions": db.contact_submissions}
     counts = {name: await collection.count_documents({}) for name, collection in tracked.items()}
-    counts["new_enquiries"] = await db.enquiries.count_documents({"status": "new"})
+    status_counts = {value: await db.enquiries.count_documents({"status": value}) for value in ENQUIRY_STATUS_ORDER}
+    counts["status_counts"] = status_counts
+    counts["new_enquiries"] = status_counts.get("new", 0)
     counts["new_contacts"] = await db.contact_submissions.count_documents({"status": {"$ne": "read"}})
     recent_enquiries = await db.enquiries.find({}, {"_id": 0}).sort("created_at", -1).to_list(6)
     recent_contacts = await db.contact_submissions.find({}, {"_id": 0}).sort("created_at", -1).to_list(3)
-    return {"counts": counts, "recent_enquiries": recent_enquiries, "recent_contacts": recent_contacts}
+    today = datetime.now(timezone.utc).date().isoformat()
+    open_leads: Dict[str, Any] = {"status": {"$nin": list(TERMINAL_STATUSES)}}
+    upcoming = await db.enquiries.find({**open_leads, "follow_up_date": {"$gte": today, "$ne": ""}}, {"_id": 0}).sort("follow_up_date", 1).to_list(5)
+    overdue = await db.enquiries.find({**open_leads, "follow_up_date": {"$lt": today, "$ne": ""}}, {"_id": 0}).sort("follow_up_date", 1).to_list(5)
+    counts["overdue_followups"] = await db.enquiries.count_documents({**open_leads, "follow_up_date": {"$lt": today, "$ne": ""}})
+    return {"counts": counts, "recent_enquiries": recent_enquiries, "recent_contacts": recent_contacts, "upcoming_followups": upcoming, "overdue_followups": overdue}
 
 
 @api_router.get("/admin/enquiries")
@@ -355,21 +403,48 @@ async def admin_enquiries(_: Dict[str, Any] = Depends(admin_user)) -> List[Dict[
 
 class EnquiryUpdate(BaseModel):
     status: Optional[str] = None
-    admin_notes: Optional[str] = None
+    follow_up_date: Optional[str] = None
+    follow_up_note: Optional[str] = None
 
 
 @api_router.patch("/admin/enquiries/{item_id}")
-async def admin_update_enquiry(item_id: str, payload: EnquiryUpdate, _: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+async def admin_update_enquiry(item_id: str, payload: EnquiryUpdate, user: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    existing = await db.enquiries.find_one({"id": item_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(404, "Enquiry not found")
     data = {key: value for key, value in payload.model_dump().items() if value is not None}
     if "status" in data and data["status"] not in ENQUIRY_STATUS_VALUES:
         raise HTTPException(422, "Invalid status")
     if not data:
         raise HTTPException(422, "Nothing to update")
-    data["updated_at"] = now_iso()
-    result = await db.enquiries.update_one({"id": item_id}, {"$set": data})
+    actor = user.get("name") or user["email"]
+    stamp = now_iso()
+    events = []
+    if "status" in data and data["status"] != existing.get("status", "new"):
+        events.append({"event": f"Status changed to {ENQUIRY_STATUS_LABELS[data['status']]}", "at": stamp, "by": actor})
+    if data.get("follow_up_date") and data.get("follow_up_date") != existing.get("follow_up_date"):
+        events.append({"event": f"Follow-up scheduled for {data['follow_up_date']}", "at": stamp, "by": actor})
+    data["updated_at"] = stamp
+    update: Dict[str, Any] = {"$set": data}
+    if events:
+        update["$push"] = {"timeline": {"$each": events}}
+    await db.enquiries.update_one({"id": item_id}, update)
+    return public_doc(await db.enquiries.find_one({"id": item_id}, {"_id": 0}))
+
+
+class NoteInput(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+@api_router.post("/admin/enquiries/{item_id}/notes", status_code=201)
+async def admin_add_enquiry_note(item_id: str, payload: NoteInput, user: Dict[str, Any] = Depends(admin_user)) -> Dict[str, Any]:
+    actor = user.get("name") or user["email"]
+    stamp = now_iso()
+    note = {"id": new_id(), "text": payload.text, "created_at": stamp, "by": actor}
+    result = await db.enquiries.update_one({"id": item_id}, {"$push": {"notes": note, "timeline": {"event": "Internal note added", "at": stamp, "by": actor}}, "$set": {"updated_at": stamp}})
     if not result.matched_count:
         raise HTTPException(404, "Enquiry not found")
-    return public_doc(await db.enquiries.find_one({"id": item_id}, {"_id": 0}))
+    return note
 
 
 @api_router.delete("/admin/enquiries/{item_id}")

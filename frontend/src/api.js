@@ -39,3 +39,4 @@ export const adminDelete = (resource, id) => request(`/admin/${resource}/${id}`,
 export const getAdminPackage = (id) => request(`/admin/packages/${id}`);
 export const getAdminSettings = () => request("/admin/settings");
 export const saveAdminSettings = (payload) => request("/admin/settings", { method: "PUT", body: JSON.stringify(payload) });
+export const addEnquiryNote = (id, text) => request(`/admin/enquiries/${id}/notes`, { method: "POST", body: JSON.stringify({ text }) });

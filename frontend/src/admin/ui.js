@@ -95,18 +95,32 @@ export function DeleteButton({ onDelete, testId }) {
 const STATUS_STYLES = {
   new: "bg-amber-50 text-amber-800 border-amber-200",
   contacted: "bg-blue-50 text-blue-800 border-blue-200",
-  quoted: "bg-purple-50 text-purple-800 border-purple-200",
-  booked: "bg-emerald-50 text-emerald-800 border-emerald-200",
+  "follow-up": "bg-orange-50 text-orange-800 border-orange-200",
+  "quotation-sent": "bg-purple-50 text-purple-800 border-purple-200",
+  confirmed: "bg-emerald-50 text-emerald-800 border-emerald-200",
   closed: "bg-slate-100 text-slate-700 border-slate-200",
+  lost: "bg-red-50 text-red-700 border-red-200",
   read: "bg-blue-50 text-blue-800 border-blue-200",
   replied: "bg-emerald-50 text-emerald-800 border-emerald-200",
+};
+
+const STATUS_LABELS = {
+  new: "New",
+  contacted: "Contacted",
+  "follow-up": "Follow-up",
+  "quotation-sent": "Quotation Sent",
+  confirmed: "Confirmed",
+  closed: "Closed",
+  lost: "Lost",
+  read: "Read",
+  replied: "Replied",
 };
 
 export function StatusBadge({ status }) {
   const value = status || "new";
   return (
-    <span data-testid={`status-badge-${value}`} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold capitalize ${STATUS_STYLES[value] || STATUS_STYLES.closed}`}>
-      {value}
+    <span data-testid={`status-badge-${value}`} className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${STATUS_STYLES[value] || STATUS_STYLES.closed}`}>
+      {STATUS_LABELS[value] || value}
     </span>
   );
 }
