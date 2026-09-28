@@ -293,6 +293,9 @@ export default function Enquiries({ onChanged }) {
                   <Info label="Children" value={selected.children} />
                   <Info label="Total travellers" value={travellerText(selected)} />
                   <Info label="Budget" value={selected.budget} />
+                  <Info label="Hotel preference" value={selected.hotel_preference} />
+                  <Info label="Transport preference" value={selected.transportation_preference} />
+                  <div className="col-span-2"><Info label="Special requirements" value={selected.special_requirements} /></div>
                 </div>
               </DrawerSection>
               <DrawerSection title="Enquiry" testId="enquiry-section-enquiry">

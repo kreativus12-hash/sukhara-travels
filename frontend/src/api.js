@@ -26,6 +26,12 @@ export const getPackages = (featured = false) => request(`/packages${featured ? 
 export const getDestination = (slug) => request(`/destinations/${slug}`);
 export const getPackage = (slug) => request(`/packages/${slug}`);
 export const submitEnquiry = (payload) => request("/enquiries", { method: "POST", body: JSON.stringify(payload) });
+export const submitContact = (payload) => request("/contact-submissions", { method: "POST", body: JSON.stringify(payload) });
+export const getBlogPosts = () => request("/blog-posts");
+export const getBlogPost = (slug) => request(`/blog-posts/${slug}`);
+export const getTestimonials = () => request("/testimonials");
+export const getGalleryItems = () => request("/gallery");
+export const getFaqs = () => request("/faqs");
 export const loginAdmin = (payload) => request("/auth/login", { method: "POST", body: JSON.stringify(payload) });
 export const getCurrentUser = () => request("/auth/me");
 export const logoutAdmin = () => request("/auth/logout", { method: "POST" });

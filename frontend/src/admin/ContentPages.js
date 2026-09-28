@@ -7,12 +7,12 @@ export function TestimonialsPage() {
     <ResourcePage
       resource="testimonials"
       title="Testimonials"
-      subtitle="Traveller stories shown on the public website."
+      subtitle="Traveller stories shown on the public website. Entries marked as sample are labelled as demo content publicly."
       addLabel="Add testimonial"
       searchKeys={["name", "trip", "quote", "location"]}
-      defaults={{ rating: 5, published: true }}
+      defaults={{ rating: 5, published: true, sample: false }}
       columns={[
-        { key: "name", label: "Traveller", render: (item) => (<div><p className="text-sm font-semibold text-slate-800">{item.name}</p><p className="text-xs text-slate-400">{item.location || "—"}</p></div>) },
+        { key: "name", label: "Traveller", render: (item) => (<div><p className="text-sm font-semibold text-slate-800">{item.name} {item.sample ? <span className="ml-1 text-[10px] font-bold uppercase tracking-wide text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">Sample</span> : null}</p><p className="text-xs text-slate-400">{item.location || "—"}</p></div>) },
         { key: "trip", label: "Trip" },
         { key: "quote", label: "Quote", render: (item) => <span className="text-sm text-slate-600 line-clamp-2 max-w-md block">{item.quote || "—"}</span> },
         { key: "rating", label: "Rating", render: (item) => <span className="inline-flex items-center gap-1 text-sm font-semibold text-amber-600"><Star size={13} fill="currentColor" /> {item.rating || 5}</span> },
@@ -22,8 +22,11 @@ export function TestimonialsPage() {
         { key: "name", label: "Traveller name" },
         { key: "location", label: "Location", placeholder: "Kochi, Kerala" },
         { key: "trip", label: "Trip taken", placeholder: "Kashmir honeymoon" },
+        { key: "date", label: "Travel date", placeholder: "March 2026" },
         { key: "rating", label: "Rating (1–5)", type: "number" },
-        { key: "quote", label: "Quote", type: "textarea", rows: 4 },
+        { key: "photo", label: "Photo URL (optional)", type: "image", placeholder: "https://…" },
+        { key: "quote", label: "Review", type: "textarea", rows: 4 },
+        { key: "sample", label: "Sample / demo content (labelled publicly)", type: "toggle" },
         { key: "published", label: "Published (visible on website)", type: "toggle" },
       ]}
     />
@@ -35,7 +38,7 @@ export function FaqsPage() {
     <ResourcePage
       resource="faqs"
       title="FAQs"
-      subtitle="Frequently asked questions, grouped by category."
+      subtitle="Frequently asked questions, grouped by category and display order."
       addLabel="Add FAQ"
       searchKeys={["question", "answer", "category"]}
       defaults={{ category: "General", sort_order: 0, published: true }}
@@ -47,7 +50,7 @@ export function FaqsPage() {
       ]}
       fields={[
         { key: "question", label: "Question" },
-        { key: "category", label: "Category", placeholder: "General, Booking, Payments…" },
+        { key: "category", label: "Category", type: "select", options: ["General", "Bookings", "Payments", "Cancellation", "Hotels", "Flights", "Visa", "Customized Trips", "Family Holidays", "International Travel"] },
         { key: "sort_order", label: "Sort order", type: "number" },
         { key: "published", label: "Published (visible on website)", type: "toggle" },
         { key: "answer", label: "Answer", type: "textarea", rows: 4 },
@@ -61,17 +64,18 @@ export function GalleryPage() {
     <ResourcePage
       resource="gallery"
       title="Gallery"
-      subtitle="Images available to the public website gallery."
+      subtitle="Images shown in the public website gallery."
       addLabel="Add image"
-      searchKeys={["title", "category"]}
+      searchKeys={["title", "category", "destination"]}
       defaults={{ published: true }}
       grid
       columns={[]}
       fields={[
         { key: "title", label: "Image title" },
-        { key: "category", label: "Category", placeholder: "Kashmir, Honeymoon…" },
-        { key: "image_url", label: "Image URL", type: "image", placeholder: "https://…" },
+        { key: "category", label: "Category", type: "select", options: ["Destinations", "Hotels", "Activities", "Travel Experiences", "Customer Moments"] },
+        { key: "destination", label: "Destination", placeholder: "Kashmir" },
         { key: "published", label: "Published (visible on website)", type: "toggle" },
+        { key: "image_url", label: "Image URL", type: "image", placeholder: "https://…" },
       ]}
     />
   );
@@ -82,23 +86,27 @@ export function BlogPage() {
     <ResourcePage
       resource="blog-posts"
       title="Blog"
-      subtitle="Travel journal posts for the public website."
+      subtitle="Travel journal posts for the public website at /blog."
       addLabel="Write a post"
-      searchKeys={["title", "slug", "excerpt"]}
-      defaults={{ published: false }}
+      searchKeys={["title", "slug", "excerpt", "category", "author"]}
+      defaults={{ published: false, author: "Sukhara Travels", category: "Journal" }}
       columns={[
         { key: "cover_image", label: "Cover", type: "image" },
-        { key: "title", label: "Post", render: (item) => (<div><p className="text-sm font-semibold text-slate-800">{item.title}</p><p className="text-xs text-slate-400">/{item.slug}</p></div>) },
+        { key: "title", label: "Post", render: (item) => (<div><p className="text-sm font-semibold text-slate-800">{item.title}</p><p className="text-xs text-slate-400">/{item.slug} · {item.category || "Journal"}</p></div>) },
         { key: "published_at", label: "Published", render: (item) => <span className="text-xs text-slate-500">{item.published_at ? formatDate(item.published_at) : "Draft"}</span> },
         { key: "published", label: "Live", type: "toggle" },
       ]}
       fields={[
         { key: "title", label: "Post title" },
         { key: "slug", label: "URL slug", placeholder: "Auto-generated if empty" },
+        { key: "category", label: "Category", type: "select", options: ["Destinations", "Planning", "Honeymoon", "Family", "Travel Tips", "Journal"] },
+        { key: "author", label: "Author" },
         { key: "cover_image", label: "Cover image URL", type: "image", placeholder: "https://…" },
         { key: "published", label: "Published (visible on website)", type: "toggle" },
         { key: "excerpt", label: "Excerpt", type: "textarea", rows: 2 },
-        { key: "content", label: "Post content", type: "textarea", rows: 10 },
+        { key: "content", label: "Post content", type: "textarea", rows: 10, hint: "Separate paragraphs with a blank line." },
+        { key: "seo_title", label: "SEO title" },
+        { key: "seo_description", label: "SEO description", type: "textarea", rows: 2 },
       ]}
     />
   );

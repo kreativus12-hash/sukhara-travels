@@ -29,7 +29,7 @@ ADMIN_PASSWORD = os.environ["ADMIN_PASSWORD"]
 JWT_ALGORITHM = "HS256"
 client = AsyncIOMotorClient(MONGO_URL)
 db = client[DB_NAME]
-app = FastAPI(title="Sukhara Travels API", version="4.0.0")
+app = FastAPI(title="Sukhara Travels API", version="5.0.0")
 api_router = APIRouter(prefix="/api")
 logger = logging.getLogger("sukhara")
 
@@ -114,6 +114,9 @@ class EnquiryCreate(BaseModel):
     children: Optional[str] = Field(default=None, max_length=10)
     budget: Optional[str] = None
     holiday_type: Optional[str] = None
+    hotel_preference: Optional[str] = None
+    transportation_preference: Optional[str] = None
+    special_requirements: Optional[str] = None
     message: Optional[str] = None
     source: str = Field(default="homepage", max_length=120)
 
@@ -140,6 +143,36 @@ DESTINATION_SEEDS = [
     ("Bali", "Indonesia", "International Holidays", "Rituals, rice terraces and ocean air", "Find a little of everything in Bali: creative towns, temple rituals, generous food and beautiful shores.", "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=80", ["Ubud", "Nusa Dua", "Seminyak"], "April to October", "6–8 days"),
     ("Maldives", "Maldives", "International Holidays", "Barefoot luxury in brilliant blue", "An easygoing island escape built around warm water, quiet mornings and unhurried evenings.", "https://images.pexels.com/photos/9149367/pexels-photo-9149367.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1200", ["Overwater villa", "Lagoon days", "Island dining"], "November to April", "4–6 days"),
     ("Thailand", "Thailand", "International Holidays", "Island escapes with a little more colour", "A bright, generous journey between bustling streets, lush islands and old-world neighbourhoods.", "https://images.unsplash.com/photo-1506665531195-3566af2b4dfa?auto=format&fit=crop&w=1200&q=80", ["Bangkok", "Phuket", "Krabi"], "November to February", "6–8 days"),
+]
+
+BLOG_SEEDS = [
+    {
+        "title": "A slower way to see Kashmir",
+        "category": "Destinations",
+        "excerpt": "The valley rewards travellers who leave room in the plan. Notes on pacing a Kashmir trip so it feels like a holiday, not a checklist.",
+        "content": "Most Kashmir itineraries try to do too much. Srinagar, Gulmarg, Pahalgam and Sonamarg in four days sounds efficient on paper — and exhausting in practice.\n\nA better approach is to pick a base and let the valley come to you. Two unhurried days on and around Dal Lake, a slow morning walk through the old city, and one or two day trips into the meadows will tell you more about Kashmir than a rushed circuit ever could.\n\nTravel in shoulder season if you can. April brings blossom, October brings gold — and both bring thinner crowds than peak summer. Keep one afternoon completely unplanned; in our experience that is the afternoon people remember.\n\nWhen you are ready, we can shape a Kashmir route around the pace you actually enjoy.",
+    },
+    {
+        "title": "How to choose between Bali and the Maldives",
+        "category": "Planning",
+        "excerpt": "Both are beautiful. They are also completely different holidays. A simple way to decide which one is yours.",
+        "content": "The Maldives is a place you go to stop. Barefoot mornings, warm water, long lunches and very little agenda. If your idea of a perfect day is doing almost nothing, beautifully, it is hard to beat.\n\nBali is a place you go to wander. Temples at sunrise, rice-terrace walks, cafés in Ubud, beach clubs in Seminyak — the island rewards curiosity and a little bit of planning.\n\nA few honest questions settle it quickly. Do you want one resort or several bases? Do you want to explore most days, or barely leave the lagoon? Is this a switch-off trip or a see-everything trip?\n\nThere is no wrong answer — only the one that fits the way you like to travel. Tell us your answers and we will tell you which island we would pick for you.",
+    },
+    {
+        "title": "What a thoughtfully planned honeymoon actually looks like",
+        "category": "Honeymoon",
+        "excerpt": "The best honeymoons are not the most expensive ones. They are the ones with room to breathe. Here is how we think about them.",
+        "content": "A honeymoon has one unusual requirement: it comes right after a wedding, when most couples are pleasantly exhausted. The single kindest thing an itinerary can do is start slow.\n\nWe like to open with two or three nights somewhere effortless — a resort where the biggest decision is breakfast — before any sightseeing begins. From there, one beautiful experience a day is plenty: a sunset cruise, a private dinner, a morning snorkel.\n\nSmall details matter more than grand gestures. A room with a view you will actually sit in. Transfers that do not eat a day. One surprise neither of you planned.\n\nIf you are dreaming about where to go, tell us how you like to travel together. We will help turn it into the right first journey.",
+    },
+]
+
+FAQ_SEEDS = [
+    ("General", "How far in advance should I plan my trip?", "For domestic holidays, 3–6 weeks is usually comfortable. For international trips and peak-season travel, 2–3 months gives the best choice of stays and fares. That said, tell us your dates — we will always tell you honestly what is possible.", 1),
+    ("Bookings", "How do I book a holiday with Sukhara?", "Start with an enquiry — through the website, WhatsApp or a call. We discuss your trip, share a tailored itinerary and quote, and once you are happy, confirm your booking with a clear payment schedule.", 1),
+    ("Payments", "How do payments work?", "Once your itinerary is finalised, we share a clear cost breakdown and payment schedule before you confirm anything. An advance secures your bookings, and the balance is due before travel — the exact terms are always shared in writing first.", 1),
+    ("Cancellation", "What is your cancellation policy?", "Cancellation terms depend on the hotels, airlines and providers in your specific itinerary. We share the exact terms that apply to your trip before you confirm, so there are no surprises later.", 1),
+    ("Customized Trips", "Can you build a trip around my budget?", "Yes — that is our favourite way to work. Tell us your destination, dates and a comfortable budget range, and we will shape an itinerary around it, explaining honestly what each choice adds or saves.", 1),
+    ("International Travel", "Do you help with visas and documentation?", "We guide you on the documentation, timelines and application process for your destination, and flag anything that needs early attention. Visa decisions always rest with the respective embassy or authority.", 1),
 ]
 
 
@@ -181,6 +214,16 @@ async def seed_content() -> None:
             await db.packages.insert_one(package)
             for day, day_title in enumerate(["Arrive and settle in", "A day to discover", "The scenic route", "Time to wander", "One last beautiful morning"], 1):
                 await db.package_itineraries.insert_one({"id": new_id(), "package_id": package["id"], "day_number": day, "title": day_title, "description": f"A flexible sample day in {destination}, with space for local experiences and easy moments.", "meals": "Breakfast", "accommodation": "Selected stay", "activities": highlights[:2]})
+    if await db.blog_posts.count_documents({}) == 0:
+        for index, post in enumerate(BLOG_SEEDS):
+            record = base_record({**post, "slug": slugify(post["title"]), "author": "Sukhara Travels", "cover_image": DESTINATION_SEEDS[[1, 5, 6][index]][5], "published": True, "published_at": now_iso(), "seo_title": f"{post['title']} | Sukhara Journal", "seo_description": post["excerpt"]})
+            await db.blog_posts.insert_one(record)
+    if await db.faqs.count_documents({}) == 0:
+        for category, question, answer, order in FAQ_SEEDS:
+            await db.faqs.insert_one(base_record({"question": question, "answer": answer, "category": category, "sort_order": order, "published": True}))
+    if await db.gallery.count_documents({}) == 0:
+        for name, _, _, _, _, image, *_ in DESTINATION_SEEDS:
+            await db.gallery.insert_one(base_record({"title": f"{name}, in focus", "image_url": image, "category": "Destinations", "destination": name, "published": True}))
     await db.website_settings.update_one({"id": "main"}, {"$setOnInsert": {"id": "main", "company_name": "Sukhara Travels and Tourism", "logo": "", "favicon": "", "phone": "+91 98765 43210", "whatsapp": "919876543210", "email": "hello@sukharatravels.com", "address": "Kerala, India", "map_url": "", "instagram": "", "facebook": "", "youtube": "", "business_hours": "Mon–Sat · 9am–6pm", "default_seo_title": "Sukhara Travels & Tourism | Thoughtful Journeys", "default_seo_description": "Thoughtfully planned domestic and international journeys."}}, upsert=True)
     admin = await db.users.find_one({"email": ADMIN_EMAIL})
     if not admin:
@@ -211,6 +254,23 @@ async def migrate_enquiries() -> None:
 async def startup() -> None:
     await seed_content()
     await migrate_enquiries()
+
+
+def slugify(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug or secrets.token_hex(4)
+
+
+async def unique_slug(collection: Any, base: str, exclude_id: Optional[str] = None) -> str:
+    candidate, counter = base, 2
+    while True:
+        query: Dict[str, Any] = {"slug": candidate}
+        if exclude_id:
+            query["id"] = {"$ne": exclude_id}
+        if not await collection.find_one(query, {"_id": 1}):
+            return candidate
+        candidate = f"{base}-{counter}"
+        counter += 1
 
 
 @api_router.get("/")
@@ -277,6 +337,17 @@ async def list_gallery() -> List[Dict[str, Any]]:
 @api_router.get("/blog-posts")
 async def list_blog_posts() -> List[Dict[str, Any]]:
     return await db.blog_posts.find({"published": True}, {"_id": 0}).sort("published_at", -1).to_list(100)
+
+
+@api_router.get("/blog-posts/{slug}")
+async def get_blog_post(slug: str) -> Dict[str, Any]:
+    post = await db.blog_posts.find_one({"slug": slug, "published": True}, {"_id": 0})
+    if not post:
+        raise HTTPException(404, "Article not found")
+    post["related_posts"] = await db.blog_posts.find({"published": True, "slug": {"$ne": slug}, "category": post.get("category", "")}, {"_id": 0}).sort("published_at", -1).to_list(3)
+    if not post["related_posts"]:
+        post["related_posts"] = await db.blog_posts.find({"published": True, "slug": {"$ne": slug}}, {"_id": 0}).sort("published_at", -1).to_list(3)
+    return post
 
 
 @api_router.get("/faqs")
@@ -488,23 +559,6 @@ async def admin_delete_contact(item_id: str, _: Dict[str, Any] = Depends(admin_u
 
 # ---------------- Admin: content management ----------------
 
-def slugify(value: str) -> str:
-    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
-    return slug or secrets.token_hex(4)
-
-
-async def unique_slug(collection: Any, base: str, exclude_id: Optional[str] = None) -> str:
-    candidate, counter = base, 2
-    while True:
-        query: Dict[str, Any] = {"slug": candidate}
-        if exclude_id:
-            query["id"] = {"$ne": exclude_id}
-        if not await collection.find_one(query, {"_id": 1}):
-            return candidate
-        candidate = f"{base}-{counter}"
-        counter += 1
-
-
 class DestinationInput(BaseModel):
     name: str = Field(min_length=2, max_length=140)
     slug: Optional[str] = None
@@ -529,6 +583,9 @@ class TestimonialInput(BaseModel):
     trip: str = ""
     quote: str = ""
     rating: int = Field(default=5, ge=1, le=5)
+    photo: str = ""
+    date: str = ""
+    sample: bool = False
     published: bool = True
 
 
@@ -544,16 +601,21 @@ class GalleryInput(BaseModel):
     title: str = Field(min_length=2, max_length=160)
     image_url: str = Field(min_length=5)
     category: str = ""
+    destination: str = ""
     published: bool = True
 
 
 class BlogInput(BaseModel):
     title: str = Field(min_length=2, max_length=200)
     slug: Optional[str] = None
+    category: str = "Journal"
+    author: str = "Sukhara Travels"
     excerpt: str = ""
     content: str = ""
     cover_image: str = ""
     published: bool = False
+    seo_title: str = ""
+    seo_description: str = ""
 
 
 def blog_hook(data: Dict[str, Any], existing: Optional[Dict[str, Any]]) -> None:

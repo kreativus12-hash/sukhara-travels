@@ -41,8 +41,14 @@ Public marketing site, DB-driven content, enquiry capture, secure admin CMS for 
   - Dashboard: per-status pipeline chips, upcoming + overdue follow-up cards (overdue = past date & not closed/confirmed/lost).
   - Public planner: email field, phone/email validation, double-submit guard, lead reference in success message; destination/package context auto-attached from detail pages; customized-trip CTA sets source "Customized Trip".
 
+- 2026-09-28 (Stage 5A): Public content & travel experience pages:
+  - New public pages: /blog (+/blog/:slug articles with related posts), /gallery (lightbox + category filters), /testimonials (DB-driven, sample/demo clearly labelled), /faq (grouped accordion), /about (claim-free story/mission/values/process), /contact (settings-driven details + working form), /customized-trips (full enquiry form, source "Customized Trip"), /honeymoon, /family-holidays, /corporate-group-travel (group enquiry form, source "Corporate / Group Travel").
+  - Shared component library extracted to src/components/public.js (Navbar with Explore/More dropdowns, settings-driven Footer, PlannerForm, cards, PageCta). App.js now routes 14 public pages; homepage/detail pages unchanged in behaviour.
+  - Backend v5: blog model extended (category, author, SEO), gallery + destination field, testimonials + photo/date/sample flag, enquiry + hotel/transport/special-requirements fields, public GET /api/blog-posts/{slug} with related posts, seed content for blog (3 articles), FAQs (6), gallery (8) — seeds insert only when collections are empty.
+  - Internal linking: package → destination guide, homepage category cards → new pages, journal links → /blog.
+  - Note: Honeymoon/Family package sections read from packages by category — tag packages in admin to populate them.
+
 ## Backlog (prioritized)
-- P1: Public pages/sections rendering admin-managed testimonials, FAQs, gallery, blog posts (currently admin-managed but not shown publicly).
 - P1: Logo from settings used in public navbar/footer (currently text brand mark).
 - P2: Enquiry email notifications (Resend) on new enquiry.
 - P2: Admin password change inside settings.
