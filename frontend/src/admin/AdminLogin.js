@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Loader2, Lock, Plane } from "lucide-react";
+import { ArrowLeft, Loader2, Lock } from "lucide-react";
 import { loginAdmin } from "@/api";
 import { btnPrimary, displayFont, inputCls, labelCls } from "./ui";
 
@@ -29,11 +29,7 @@ export default function AdminLogin({ onSuccess }) {
         <div className="absolute inset-0 bg-[#0B192C]/80" />
         <div className="relative h-full flex flex-col justify-between p-12 text-white">
           <div className="flex items-center gap-3">
-            <span className="h-10 w-10 rounded-xl bg-[#D97706] flex items-center justify-center"><Plane size={20} /></span>
-            <div>
-              <p className="font-extrabold tracking-wide" style={displayFont}>SUKHARA</p>
-              <p className="text-[10px] tracking-[0.3em] text-slate-300">TRAVELS & TOURISM</p>
-            </div>
+            <img src="/assets/sukhara-logo.webp" alt="Sukhara Travels — Making Every Journey Easier" className="h-16 w-auto rounded-xl bg-white p-2 shadow-lg" data-testid="admin-login-logo" />
           </div>
           <div>
             <h2 className="text-3xl font-extrabold leading-tight max-w-md" style={displayFont}>The workspace behind every thoughtful journey.</h2>
@@ -45,13 +41,7 @@ export default function AdminLogin({ onSuccess }) {
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="bg-white border border-slate-200 rounded-2xl shadow-xl p-8">
-            <div className="flex items-center gap-3 mb-6 lg:hidden">
-              <span className="h-10 w-10 rounded-xl bg-[#0B192C] text-white flex items-center justify-center"><Plane size={20} /></span>
-              <div>
-                <p className="font-extrabold text-slate-900" style={displayFont}>SUKHARA</p>
-                <p className="text-[10px] tracking-[0.3em] text-slate-400">TRAVELS & TOURISM</p>
-              </div>
-            </div>
+            <div className="mb-6 lg:hidden"><img src="/assets/sukhara-logo.webp" alt="Sukhara Travels — Making Every Journey Easier" className="h-16 w-auto rounded-xl" /></div>
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#B45309] bg-amber-50 border border-amber-200 rounded-full px-3 py-1"><Lock size={12} /> Secure workspace</span>
             <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-3" style={displayFont}>Admin sign in</h1>
             <p className="text-sm text-slate-500 mt-1 mb-6">Use your Sukhara administrator credentials.</p>

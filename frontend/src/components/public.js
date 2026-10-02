@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, Instagram, Menu, MessageCircle, Plane, Users, X, Youtube } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, Instagram, Menu, MessageCircle, Users, X, Youtube } from "lucide-react";
 import { getSettings, submitEnquiry } from "@/api";
 
 const SITE_URL = "https://sukharatravels.com";
@@ -55,7 +55,14 @@ export function useTitle(title, description) {
 }
 
 export function Brand({ light = false }) {
-  return <Link to="/" className={`brand ${light ? "brand-light" : ""}`} data-testid="brand-logo-link"><span className="brand-mark"><Plane size={19} strokeWidth={2.5} /></span><span><strong>SUKHARA</strong><small>TRAVELS & TOURISM</small></span></Link>;
+  return (
+    <Link to="/" className={`brand ${light ? "brand-light" : ""}`} data-testid="brand-logo-link" aria-label="Sukhara Travels — home">
+      <picture>
+        <source srcSet="/assets/sukhara-logo.webp" type="image/webp" />
+        <img src="/assets/sukhara-logo.png" alt="Sukhara Travels — Making Every Journey Easier" className="brand-logo" width="640" height="640" />
+      </picture>
+    </Link>
+  );
 }
 
 const EXPLORE_LINKS = [["Destinations", "/#destinations"], ["Holiday Packages", "/#packages"], ["Honeymoon", "/honeymoon"], ["Family Holidays", "/family-holidays"], ["Corporate / Group Travel", "/corporate-group-travel"]];

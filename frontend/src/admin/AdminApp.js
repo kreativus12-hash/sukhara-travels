@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { NavLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
-import { ExternalLink, HelpCircle, Images, Inbox, LayoutDashboard, Loader2, LogOut, Map, Menu, MessageSquareQuote, Newspaper, Package, PhoneCall, Plane, Settings as SettingsIcon, X } from "lucide-react";
+import { ExternalLink, HelpCircle, Images, Inbox, LayoutDashboard, Loader2, LogOut, Map, Menu, MessageSquareQuote, Newspaper, Package, PhoneCall, Settings as SettingsIcon, X } from "lucide-react";
 import { getAdminStats, getCurrentUser, logoutAdmin } from "@/api";
 import AdminLogin from "./AdminLogin";
 import Dashboard from "./Dashboard";
@@ -77,11 +77,8 @@ export default function AdminApp() {
       <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-[#0B192C] text-white flex flex-col border-r border-slate-800 shadow-xl transition-transform duration-200 ${navOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`} data-testid="admin-sidebar">
         <div className="flex items-center justify-between px-5 h-16 border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-2.5">
-            <span className="h-9 w-9 rounded-xl bg-[#D97706] flex items-center justify-center"><Plane size={17} /></span>
-            <div>
-              <p className="text-sm font-extrabold tracking-wide leading-none" style={displayFont}>SUKHARA</p>
-              <p className="text-[9px] tracking-[0.28em] text-slate-400 mt-1">ADMIN PANEL</p>
-            </div>
+            <img src="/assets/sukhara-logo.webp" alt="Sukhara Travels" className="h-11 w-auto rounded-lg bg-white p-1" data-testid="admin-sidebar-logo" />
+            <p className="text-[9px] tracking-[0.28em] text-slate-400">ADMIN PANEL</p>
           </div>
           <button className="lg:hidden p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white" onClick={() => setNavOpen(false)} aria-label="Close navigation" data-testid="admin-nav-close-button"><X size={18} /></button>
         </div>

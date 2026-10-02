@@ -120,3 +120,9 @@
 .legal-section p{font-size:13px;line-height:1.8;color:var(--muted)}
 .legal-section a{color:var(--blue);font-weight:600}
 @media(max-width:760px){.legal-wrap{padding:25px 18px 70px}}
+
+/* ===== Brand logo ===== */
+.brand picture{display:flex}
+.brand-logo{height:58px;width:auto;display:block;border-radius:10px}
+.brand-light .brand-logo{height:112px;background:#fff;padding:10px 14px;border-radius:14px;box-shadow:0 12px 32px #02141f5e}
+@media(max-width:760px){.brand-logo{height:46px}.brand-light .brand-logo{height:92px}}
