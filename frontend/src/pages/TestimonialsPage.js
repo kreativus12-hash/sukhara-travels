@@ -9,7 +9,7 @@ function Stars({ rating }) {
 
 export default function TestimonialsPage() {
   const settings = useSettings();
-  useTitle("Testimonials");
+  useTitle("Testimonials", "Traveller stories and reviews for holidays planned by Sukhara Travels and Tourism.");
   const [items, setItems] = useState(null);
 
   useEffect(() => { getTestimonials().then(setItems).catch(() => setItems([])); }, []);

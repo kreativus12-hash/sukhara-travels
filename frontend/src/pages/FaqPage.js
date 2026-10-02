@@ -5,7 +5,7 @@ import { DetailShell, PageCta, PublicEmpty, useSettings, useTitle } from "../com
 
 export default function FaqPage() {
   const settings = useSettings();
-  useTitle("FAQ");
+  useTitle("FAQ", "Answers to common questions about booking, payments, cancellations and customized trips with Sukhara Travels.");
   const [faqs, setFaqs] = useState(null);
   const [open, setOpen] = useState(null);
 

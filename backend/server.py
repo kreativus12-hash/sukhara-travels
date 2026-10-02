@@ -355,8 +355,27 @@ async def list_faqs() -> List[Dict[str, Any]]:
     return await db.faqs.find({"published": True}, {"_id": 0}).sort([("category", 1), ("sort_order", 1)]).to_list(100)
 
 
+# ---------------- Public form rate limiting ----------------
+
+SUBMISSION_WINDOW_SECONDS = 600
+SUBMISSION_MAX = 5
+submission_log: Dict[str, List[float]] = {}
+
+
+def submission_guard(request: Request) -> None:
+    forwarded = request.headers.get("x-forwarded-for")
+    key = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    now = datetime.now(timezone.utc).timestamp()
+    entries = [stamp for stamp in submission_log.get(key, []) if now - stamp < SUBMISSION_WINDOW_SECONDS]
+    if len(entries) >= SUBMISSION_MAX:
+        raise HTTPException(429, "Too many submissions in a short time. Please wait a few minutes and try again.")
+    entries.append(now)
+    submission_log[key] = entries
+
+
 @api_router.post("/enquiries", status_code=201)
-async def create_enquiry(payload: EnquiryCreate) -> Dict[str, str]:
+async def create_enquiry(payload: EnquiryCreate, request: Request) -> Dict[str, str]:
+    submission_guard(request)
     data = payload.model_dump()
     if data.get("package_id"):
         package = await db.packages.find_one({"id": data["package_id"]}, {"_id": 0, "title": 1, "destination": 1})
@@ -382,7 +401,8 @@ async def create_enquiry(payload: EnquiryCreate) -> Dict[str, str]:
 
 
 @api_router.post("/contact-submissions", status_code=201)
-async def create_contact_submission(payload: ContactSubmissionCreate) -> Dict[str, str]:
+async def create_contact_submission(payload: ContactSubmissionCreate, request: Request) -> Dict[str, str]:
+    submission_guard(request)
     record = base_record(payload.model_dump())
     record["status"] = "new"
     await db.contact_submissions.insert_one(record)

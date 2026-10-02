@@ -7,7 +7,7 @@ const CATEGORIES = ["All", "Destinations", "Hotels", "Activities", "Travel Exper
 
 export default function GalleryPage() {
   const settings = useSettings();
-  useTitle("Gallery");
+  useTitle("Gallery", "Travel photography from destinations we love — browse the Sukhara Travels gallery.");
   const [items, setItems] = useState(null);
   const [category, setCategory] = useState("All");
   const [lightbox, setLightbox] = useState(null);

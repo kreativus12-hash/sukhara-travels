@@ -48,6 +48,8 @@ Public marketing site, DB-driven content, enquiry capture, secure admin CMS for 
   - Internal linking: package → destination guide, homepage category cards → new pages, journal links → /blog.
   - Note: Honeymoon/Family package sections read from packages by category — tag packages in admin to populate them.
 
+- 2026-10 (Final production pass): server-side rate limiting on public form endpoints (5 submissions / 10 min per IP, friendly 429); legal pages /privacy-policy, /terms-and-conditions, /cancellation-policy (supplier-dependence disclaimers, footer-linked); unique title/description/canonical/OG on all public pages; lazy-loading on below-fold images. Email notification NOT implemented — no email-sending provider is configured in the project; requires adding one (e.g. Resend) before it can be built.
+
 ## Backlog (prioritized)
 - P1: Logo from settings used in public navbar/footer (currently text brand mark).
 - P2: Enquiry email notifications (Resend) on new enquiry.

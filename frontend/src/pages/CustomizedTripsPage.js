@@ -12,7 +12,7 @@ const STEPS = [
 
 export default function CustomizedTripsPage() {
   const settings = useSettings();
-  useTitle("Customized Trips");
+  useTitle("Customized Trips", "Request a customized travel itinerary built around your destination, dates, budget and travel style.");
 
   return (
     <DetailShell settings={settings}>

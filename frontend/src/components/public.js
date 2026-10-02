@@ -167,7 +167,7 @@ export function Footer({ settings }) {
       </div>
       <div className="footer-bottom">
         <span>© 2026 Sukhara Travels and Tourism</span>
-        <div><Link to="/contact">Privacy policy</Link><Link to="/contact">Terms & conditions</Link><Link to="/faq">Cancellation policy</Link></div>
+        <div><Link to="/privacy-policy">Privacy policy</Link><Link to="/terms-and-conditions">Terms & conditions</Link><Link to="/cancellation-policy">Cancellation policy</Link></div>
         <span className="footer-domain">sukharatravels.com</span>
       </div>
     </footer>
@@ -179,11 +179,11 @@ export function SectionHeading({ eyebrow, title, copy, link }) {
 }
 
 export function DestinationCard({ item, index }) {
-  return <article className={`destination-card ${index === 0 ? "destination-featured" : ""}`} data-testid={`destination-card-${item.slug}`}><img src={item.hero_image} alt={item.name} /><div className="image-shade" /><div className="destination-copy"><span>0{index + 1}</span><h3>{item.name}</h3><p>{item.short_description}</p><Link to={`/destinations/${item.slug}`} data-testid={`destination-explore-${item.slug}`}>Explore <ArrowRight size={15} /></Link></div></article>;
+  return <article className={`destination-card ${index === 0 ? "destination-featured" : ""}`} data-testid={`destination-card-${item.slug}`}><img src={item.hero_image} alt={item.name} loading="lazy" decoding="async" /><div className="image-shade" /><div className="destination-copy"><span>0{index + 1}</span><h3>{item.name}</h3><p>{item.short_description}</p><Link to={`/destinations/${item.slug}`} data-testid={`destination-explore-${item.slug}`}>Explore <ArrowRight size={15} /></Link></div></article>;
 }
 
 export function PackageCard({ item }) {
-  return <article className="package-card" data-testid={`package-card-${item.slug}`}><div className="package-image"><img src={item.hero_image} alt={item.title} /><span className="package-badge">Sample / demo package</span></div><div className="package-body"><span className="card-kicker">{item.destination}</span><h3>{item.title}</h3><div className="package-meta"><span><CalendarDays size={15} /> {item.duration}</span><strong>From {item.starting_price}</strong></div><div className="tag-row">{item.highlights?.map((tag) => <span key={tag}>{tag}</span>)}</div><div className="card-actions"><Link to={`/packages/${item.slug}`} className="button button-outline" data-testid={`package-view-${item.slug}`}>View package</Link><a href={`/?package_id=${item.id}&destination=${encodeURIComponent(item.destination || "")}#planner`} className="text-link" data-testid={`package-enquire-${item.slug}`}>Enquire <ArrowRight size={15} /></a></div></div></article>;
+  return <article className="package-card" data-testid={`package-card-${item.slug}`}><div className="package-image"><img src={item.hero_image} alt={item.title} loading="lazy" decoding="async" /><span className="package-badge">Sample / demo package</span></div><div className="package-body"><span className="card-kicker">{item.destination}</span><h3>{item.title}</h3><div className="package-meta"><span><CalendarDays size={15} /> {item.duration}</span><strong>From {item.starting_price}</strong></div><div className="tag-row">{item.highlights?.map((tag) => <span key={tag}>{tag}</span>)}</div><div className="card-actions"><Link to={`/packages/${item.slug}`} className="button button-outline" data-testid={`package-view-${item.slug}`}>View package</Link><a href={`/?package_id=${item.id}&destination=${encodeURIComponent(item.destination || "")}#planner`} className="text-link" data-testid={`package-enquire-${item.slug}`}>Enquire <ArrowRight size={15} /></a></div></div></article>;
 }
 
 export function DetailShell({ children, settings }) {
@@ -195,7 +195,7 @@ export function DetailHero({ image, eyebrow, title, description }) {
 }
 
 export function Gallery({ images, title }) {
-  return <section className="detail-gallery"><div className="detail-gallery-heading"><span className="eyebrow">A closer look</span><h2>{title}</h2></div><div>{images.map((image, index) => <img key={`${image}-${index}`} src={image} alt={`${title} ${index + 1}`} />)}</div></section>;
+  return <section className="detail-gallery"><div className="detail-gallery-heading"><span className="eyebrow">A closer look</span><h2>{title}</h2></div><div>{images.map((image, index) => <img key={`${image}-${index}`} src={image} alt={`${title} ${index + 1}`} loading="lazy" decoding="async" />)}</div></section>;
 }
 
 export function PageCta({ settings, eyebrow = "The next destination is yours", title = <>Let’s plan your<br /><em>next journey.</em></>, copy = "From weekend escapes to international holidays, tell us what you're dreaming about." }) {

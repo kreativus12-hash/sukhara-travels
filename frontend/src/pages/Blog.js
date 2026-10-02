@@ -7,7 +7,7 @@ import { DetailShell, PageCta, PublicEmpty, formatPublicDate, useSettings, useTi
 export function BlogCard({ post }) {
   return (
     <Link to={`/blog/${post.slug}`} className="blog-card" data-testid={`blog-card-${post.slug}`}>
-      <div className="blog-card-img">{post.cover_image ? <img src={post.cover_image} alt={post.title} /> : null}</div>
+      <div className="blog-card-img">{post.cover_image ? <img src={post.cover_image} alt={post.title} loading="lazy" decoding="async" /> : null}</div>
       <div className="blog-card-body">
         <span className="card-kicker">{post.category || "Journal"}</span>
         <h3>{post.title}</h3>
@@ -20,7 +20,7 @@ export function BlogCard({ post }) {
 
 export function BlogList() {
   const settings = useSettings();
-  useTitle("Travel Journal");
+  useTitle("Travel Journal", "Travel notes, destination guides and planning advice from the Sukhara Travels journal.");
   const [posts, setPosts] = useState(null);
   const [category, setCategory] = useState("All");
   const [query, setQuery] = useState("");
@@ -60,7 +60,7 @@ export function BlogList() {
           {featured && (
             <div className="blog-feature">
               <Link to={`/blog/${featured.slug}`} className="blog-feature-inner" data-testid={`blog-featured-${featured.slug}`}>
-                <div className="blog-feature-img">{featured.cover_image ? <img src={featured.cover_image} alt={featured.title} /> : null}</div>
+                <div className="blog-feature-img">{featured.cover_image ? <img src={featured.cover_image} alt={featured.title} loading="lazy" decoding="async" /> : null}</div>
                 <div className="blog-feature-body">
                   <span className="card-kicker">Featured · {featured.category || "Journal"}</span>
                   <h3>{featured.title}</h3>
@@ -84,7 +84,7 @@ export function BlogPost() {
   const [post, setPost] = useState(null);
 
   useEffect(() => { getBlogPost(slug).then(setPost).catch(() => setPost({ notFound: true })); }, [slug]);
-  useTitle(post && !post.notFound ? post.title : "Travel Journal");
+  useTitle(post && !post.notFound ? post.title : "Travel Journal", post && !post.notFound ? post.excerpt : undefined);
 
   if (!post) return <div className="detail-loading">Loading the story…</div>;
   if (post.notFound) return <div className="detail-loading">Article not found. <Link to="/blog" style={{ color: "inherit" }}>Back to the journal</Link></div>;

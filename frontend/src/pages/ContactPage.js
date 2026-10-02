@@ -5,7 +5,7 @@ import { DetailShell, PageCta, useSettings, useTitle, waUrl } from "../component
 
 export default function ContactPage() {
   const settings = useSettings();
-  useTitle("Contact");
+  useTitle("Contact", "Contact Sukhara Travels and Tourism — phone, WhatsApp, email and a quick enquiry form.");
   const [fields, setFields] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
   const [state, setState] = useState({ loading: false, success: "", error: "" });
   const change = (key) => (event) => setFields((current) => ({ ...current, [key]: event.target.value }));

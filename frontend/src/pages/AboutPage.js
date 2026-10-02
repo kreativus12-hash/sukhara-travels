@@ -18,7 +18,7 @@ const STEPS = [
 
 export default function AboutPage() {
   const settings = useSettings();
-  useTitle("About");
+  useTitle("About", "Learn how Sukhara Travels and Tourism plans personalized domestic and international holidays — our story, values and planning process.");
 
   return (
     <DetailShell settings={settings}>

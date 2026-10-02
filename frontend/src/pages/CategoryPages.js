@@ -7,6 +7,7 @@ const CONFIG = {
   honeymoon: {
     image: "https://images.pexels.com/photos/9149367/pexels-photo-9149367.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1800",
     eyebrow: "Honeymoon",
+    description: "Honeymoon holidays planned around you — romantic destinations, unhurried itineraries and thoughtful details.",
     title: <>A beautiful beginning,<br /><em>beautifully planned.</em></>,
     copy: "Slow mornings, rooms with a view, and days with nothing to prove. We plan honeymoons that start gently and stay unhurried.",
     experiences: [["Slow starts", "Your first days stay effortless — no dawn transfers after a wedding week."], ["Private moments", "Sunset cruises, candlelit dinners, quiet corners worth remembering."], ["Stays that matter", "Rooms chosen for the view you will actually sit in together."]],
@@ -18,6 +19,7 @@ const CONFIG = {
   family: {
     image: "https://images.unsplash.com/photo-1506665531195-3566af2b4dfa?auto=format&fit=crop&w=1800&q=80",
     eyebrow: "Family holidays",
+    description: "Family holidays designed for every generation — sensible pacing, family-friendly stays and honest advice.",
     title: <>Trips the whole family<br /><em>actually enjoys.</em></>,
     copy: "Kid-friendly pacing, rooms that fit everyone, and days planned so the grandparents and the seven-year-old both have a good time.",
     experiences: [["Sensible pacing", "Shorter drives, pool time, and afternoons that do not melt down."], ["Rooms that work", "Family rooms, interconnecting options and honest advice on what fits."], ["Something for everyone", "A little adventure for the kids, a little quiet for the adults."]],
@@ -31,7 +33,7 @@ const CONFIG = {
 export function CategoryLanding({ kind }) {
   const config = CONFIG[kind];
   const settings = useSettings();
-  useTitle(config.eyebrow);
+  useTitle(config.eyebrow, config.description);
   const [data, setData] = useState({ destinations: [], packages: [] });
 
   useEffect(() => {
@@ -96,7 +98,7 @@ const SERVICES = [
 
 export function CorporatePage() {
   const settings = useSettings();
-  useTitle("Corporate & Group Travel");
+  useTitle("Corporate & Group Travel", "Corporate offsites, group tours and team travel planned end to end by Sukhara Travels and Tourism.");
   const [fields, setFields] = useState({ name: "", phone: "", email: "", travellers: "", message: "" });
   const [state, setState] = useState({ loading: false, success: "", error: "" });
   const change = (key) => (event) => setFields((current) => ({ ...current, [key]: event.target.value }));

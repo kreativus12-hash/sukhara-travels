@@ -111,3 +111,12 @@
 .benefits-flat{border-top:1px solid #cdd3cc}
 @media(max-width:1100px){.nav-desktop-only{gap:13px}.nav-desktop-only a,.nav-dropdown>button{font-size:10px}.blog-grid,.testimonial-grid{grid-template-columns:repeat(2,1fr)}.gallery-grid{columns:2}.trip-form-section,.contact-grid{grid-template-columns:1fr;gap:40px}.value-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){.nav-desktop-only{display:none}.nav-mobile-only{display:flex;flex-direction:column;gap:17px}.page-head{padding:70px 20px 0}.page-head h2{font-size:40px}.blog-tools{padding:0 20px;flex-direction:column;align-items:flex-start}.blog-feature-inner{grid-template-columns:1fr}.blog-feature-img{min-height:220px}.blog-feature-body{padding:26px 22px}.blog-grid,.testimonial-grid{grid-template-columns:1fr;padding:0 20px 75px}.article-wrap{padding:50px 20px 10px}.article-cta{padding:28px 22px}.gallery-grid{columns:2;padding:0 15px 75px;column-gap:8px}.gallery-item{margin-bottom:8px}.gallery-item figcaption{opacity:1;padding:26px 10px 10px}.gallery-item figcaption strong{font-size:10px}.lightbox-nav{display:none}.faq-wrap{padding:30px 18px 75px}.faq-q{font-size:13px;padding:16px}.contact-grid{padding:40px 18px 75px}.trip-form{padding:26px 20px}.trip-form-grid{grid-template-columns:1fr;gap:16px}.trip-form-wide{grid-column:span 1}.trip-form-section{padding:20px 18px 75px}.trip-form-intro h2{font-size:36px}.value-grid{grid-template-columns:1fr}}
+
+/* ===== Legal pages ===== */
+.legal-wrap{max-width:840px;margin:0 auto;padding:35px 25px 100px}
+.legal-updated{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:35px;border-bottom:1px solid #e0e5e2;padding-bottom:16px}
+.legal-section{margin-bottom:30px}
+.legal-section h3{font-family:'DM Serif Display';font-size:23px;font-weight:400;color:var(--navy);margin-bottom:9px}
+.legal-section p{font-size:13px;line-height:1.8;color:var(--muted)}
+.legal-section a{color:var(--blue);font-weight:600}
+@media(max-width:760px){.legal-wrap{padding:25px 18px 70px}}
