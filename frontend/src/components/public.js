@@ -3,6 +3,10 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, CalendarDays, Check, ChevronDown, Instagram, Menu, MessageCircle, Plane, Users, X, Youtube } from "lucide-react";
 import { getSettings, submitEnquiry } from "@/api";
 
+const SITE_URL = "https://sukharatravels.com";
+const DEFAULT_OG_IMAGE = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80";
+const DEFAULT_DESCRIPTION = "Thoughtfully planned domestic and international journeys by Sukhara Travels and Tourism.";
+
 export const fallbackSettings = { company_name: "Sukhara Travels and Tourism", whatsapp: "919876543210", email: "hello@sukharatravels.com", phone: "+91 98765 43210", address: "Kerala, India", business_hours: "Mon–Sat · 9am–6pm", instagram: "", facebook: "", youtube: "", map_url: "" };
 
 export function waUrl(number, message = "Hi Sukhara Travels and Tourism, I would like help planning my trip.") {
@@ -15,10 +19,39 @@ export function useSettings() {
   return settings;
 }
 
-export function useTitle(title) {
+function upsertMeta(attribute, key, content) {
+  if (!content) return;
+  let tag = document.head.querySelector(`meta[${attribute}="${key}"]`);
+  if (!tag) {
+    tag = document.createElement("meta");
+    tag.setAttribute(attribute, key);
+    document.head.appendChild(tag);
+  }
+  tag.setAttribute("content", content);
+}
+
+export function useTitle(title, description) {
+  const path = window.location.pathname;
   useEffect(() => {
-    document.title = title ? `${title} | Sukhara Travels and Tourism` : "Sukhara Travels & Tourism | Thoughtful Journeys";
-  }, [title]);
+    const fullTitle = title ? (title.includes("Sukhara") ? title : `${title} | Sukhara Travels and Tourism`) : "Sukhara Travels & Tourism | Thoughtful Journeys";
+    document.title = fullTitle;
+    const url = `${SITE_URL}${path === "/" ? "/" : path}`;
+    let canonical = document.head.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", url);
+    upsertMeta("property", "og:title", fullTitle);
+    upsertMeta("property", "og:url", url);
+    upsertMeta("property", "og:type", "website");
+    upsertMeta("property", "og:image", DEFAULT_OG_IMAGE);
+    upsertMeta("property", "og:site_name", "Sukhara Travels and Tourism");
+    upsertMeta("name", "description", description || DEFAULT_DESCRIPTION);
+    upsertMeta("property", "og:description", description || DEFAULT_DESCRIPTION);
+    upsertMeta("name", "twitter:card", "summary_large_image");
+  }, [title, description, path]);
 }
 
 export function Brand({ light = false }) {
@@ -37,6 +70,27 @@ function NavItem({ label, href, onClick }) {
 
 export function Navbar({ settings }) {
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    let script = document.getElementById("ld-json-business");
+    if (!script) {
+      script = document.createElement("script");
+      script.type = "application/ld+json";
+      script.id = "ld-json-business";
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "TravelAgency",
+      name: settings.company_name,
+      url: SITE_URL,
+      description: "Indian travel agency and tour operator offering domestic and international holidays, customized trips, honeymoon packages, family holidays and corporate or group travel.",
+      telephone: settings.phone,
+      email: settings.email,
+      address: settings.address,
+    });
+  }, [settings]);
+
   return (
     <header className="navbar" data-testid="site-navigation">
       <div className="nav-inner">
@@ -101,11 +155,13 @@ export function Footer({ settings }) {
             <span>Say hello</span>
             <p>{settings.phone}<br /><a href={waUrl(settings.whatsapp)} target="_blank" rel="noreferrer" data-testid="footer-whatsapp-link">WhatsApp us</a><br />{settings.address}<br />{settings.business_hours}</p>
             <Link to="/contact">Contact page</Link>
-            <div className="socials">
-              <a href={settings.instagram || "/contact"} aria-label="Instagram" data-testid="instagram-link"><Instagram size={17} /></a>
-              <a href={settings.facebook || "/contact"} aria-label="Facebook" data-testid="facebook-link"><Users size={17} /></a>
-              <a href={settings.youtube || "/contact"} aria-label="YouTube" data-testid="youtube-link"><Youtube size={17} /></a>
-            </div>
+            {(settings.instagram || settings.facebook || settings.youtube) && (
+              <div className="socials">
+                {settings.instagram ? <a href={settings.instagram} aria-label="Instagram" data-testid="instagram-link"><Instagram size={17} /></a> : null}
+                {settings.facebook ? <a href={settings.facebook} aria-label="Facebook" data-testid="facebook-link"><Users size={17} /></a> : null}
+                {settings.youtube ? <a href={settings.youtube} aria-label="YouTube" data-testid="youtube-link"><Youtube size={17} /></a> : null}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -175,7 +231,6 @@ export function PlannerForm({ settings, compact = false, source, holidayType = "
   });
   const [state, setState] = useState({ loading: false, success: "", error: "" });
   const change = (key) => (event) => setFields((current) => ({ ...current, [key]: event.target.value }));
-  const testPrefix = compact ? "planner" : "custom-trip";
 
   const submit = async (event) => {
     event.preventDefault();

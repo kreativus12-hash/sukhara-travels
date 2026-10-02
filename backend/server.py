@@ -15,7 +15,7 @@ import bcrypt
 import jwt
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -800,6 +800,27 @@ async def admin_save_settings(payload: SettingsInput, _: Dict[str, Any] = Depend
     data["updated_at"] = now_iso()
     await db.website_settings.update_one({"id": "main"}, {"$set": data, "$setOnInsert": {"id": "main"}}, upsert=True)
     return public_doc(await db.website_settings.find_one({"id": "main"}, {"_id": 0}))
+
+
+# ---------------- SEO: dynamic sitemap ----------------
+
+SITE_URL = os.environ.get("SITE_URL", "https://sukharatravels.com").rstrip("/")
+STATIC_SITEMAP_ROUTES = ["", "/blog", "/gallery", "/testimonials", "/faq", "/about", "/contact", "/customized-trips", "/honeymoon", "/family-holidays", "/corporate-group-travel"]
+
+
+@api_router.get("/sitemap.xml")
+async def sitemap_xml() -> Response:
+    paths = list(STATIC_SITEMAP_ROUTES)
+    async for doc in db.destinations.find({"published": True}, {"_id": 0, "slug": 1}):
+        paths.append(f"/destinations/{doc['slug']}")
+    async for doc in db.packages.find({"published": True}, {"_id": 0, "slug": 1}):
+        paths.append(f"/packages/{doc['slug']}")
+    async for doc in db.blog_posts.find({"published": True}, {"_id": 0, "slug": 1}):
+        paths.append(f"/blog/{doc['slug']}")
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    xml += "\n".join(f"  <url><loc>{SITE_URL}{path}</loc></url>" for path in paths)
+    xml += "\n</urlset>"
+    return Response(content=xml, media_type="application/xml")
 
 
 app.include_router(api_router)

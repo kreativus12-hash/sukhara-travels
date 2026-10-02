@@ -41,9 +41,9 @@ export default function ContactPage() {
           <div><Clock size={15} /> <span>{settings.business_hours}</span></div>
           {settings.map_url ? <a href={settings.map_url} target="_blank" rel="noreferrer" className="whatsapp-detail" data-testid="contact-map-link"><MapPin size={16} /> Open in Google Maps</a> : null}
           <div className="socials socials-dark">
-            <a href={settings.instagram || "#"} aria-label="Instagram" data-testid="contact-instagram-link"><Instagram size={16} /></a>
-            <a href={settings.facebook || "#"} aria-label="Facebook" data-testid="contact-facebook-link"><Users size={16} /></a>
-            <a href={settings.youtube || "#"} aria-label="YouTube" data-testid="contact-youtube-link"><Youtube size={16} /></a>
+            {settings.instagram ? <a href={settings.instagram} aria-label="Instagram" data-testid="contact-instagram-link"><Instagram size={16} /></a> : null}
+            {settings.facebook ? <a href={settings.facebook} aria-label="Facebook" data-testid="contact-facebook-link"><Users size={16} /></a> : null}
+            {settings.youtube ? <a href={settings.youtube} aria-label="YouTube" data-testid="contact-youtube-link"><Youtube size={16} /></a> : null}
           </div>
         </div>
         <form className="trip-form contact-form" onSubmit={submit} data-testid="contact-form">

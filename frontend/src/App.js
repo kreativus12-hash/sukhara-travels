@@ -3,7 +3,7 @@ import { BrowserRouter, Link, Route, Routes, useParams } from "react-router-dom"
 import { ArrowRight, Check, Compass, Globe2, Heart, MessageCircle, Mountain, Plane, Sparkles, Star, Users } from "lucide-react";
 import "@/App.css";
 import { getDestination, getDestinations, getPackage, getPackages } from "@/api";
-import { DestinationCard, DetailHero, DetailShell, Gallery, PackageCard, PlannerForm, SectionHeading, useSettings, waUrl } from "@/components/public";
+import { DestinationCard, DetailHero, DetailShell, Gallery, PackageCard, PlannerForm, SectionHeading, useSettings, useTitle, waUrl } from "@/components/public";
 import AdminApp from "@/admin/AdminApp";
 
 const heroImage = "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=2200&q=85";
@@ -11,6 +11,7 @@ const categories = [["Domestic Holidays", "Find new corners closer to home", Mou
 
 function Home() {
   const settings = useSettings();
+  useTitle();
   const [data, setData] = useState({ destinations: [], packages: [], error: "" });
   useEffect(() => { Promise.all([getDestinations(true), getPackages(true)]).then(([destinations, packages]) => setData({ destinations, packages, error: "" })).catch((error) => setData((current) => ({ ...current, error: error.message }))); }, []);
   const { destinations, packages, error } = data;
@@ -29,6 +30,7 @@ function DestinationPage() {
   const { slug } = useParams();
   const [data, setData] = useState(null);
   const settings = useSettings();
+  useTitle(data?.seo_title || data?.name, data?.seo_description || data?.short_description);
   useEffect(() => { getDestination(slug).then(setData).catch(() => setData({ notFound: true })); }, [slug]);
   if (!data) return <div className="detail-loading">Loading your destination…</div>;
   if (data.notFound) return <div className="detail-loading">Destination not found.</div>;
@@ -40,6 +42,7 @@ function PackagePage() {
   const [data, setData] = useState(null);
   const [destSlug, setDestSlug] = useState("");
   const settings = useSettings();
+  useTitle(data?.seo_title || data?.title, data?.seo_description || data?.short_description);
   useEffect(() => {
     getPackage(slug).then((item) => {
       setData(item);
@@ -52,6 +55,26 @@ function PackagePage() {
   if (!data) return <div className="detail-loading">Loading your itinerary…</div>;
   if (data.notFound) return <div className="detail-loading">Package not found.</div>;
   return <DetailShell settings={settings}><DetailHero image={data.hero_image} eyebrow={`${data.destination} · ${data.duration}`} title={data.title} description={data.full_description} /><section className="detail-content package-detail"><div><span className="eyebrow">Sample / demo itinerary</span><h2>Travel experiences<br /><em>worth remembering.</em></h2><div className="price-line"><strong>From {data.starting_price}</strong><span>{data.duration}</span></div><div className="itinerary">{data.itinerary.map((day) => <article key={day.id}><span>Day {day.day_number}</span><div><h3>{day.title}</h3><p>{day.description}</p><small>{day.meals} · {day.accommodation}</small></div></article>)}</div>{destSlug && <Link to={`/destinations/${destSlug}`} className="text-link" style={{ marginTop: "25px" }} data-testid="package-destination-link">Explore the {data.destination} destination guide <ArrowRight size={16} /></Link>}</div><div className="highlight-panel"><span className="eyebrow">Included in your journey</span><h3>At a glance</h3>{data.highlights.map((item) => <div key={item}><Check size={15} /> {item}</div>)}<h4>Inclusions</h4>{data.inclusions.map((item) => <p key={item}>{item}</p>)}<h4>Exclusions</h4>{data.exclusions.map((item) => <p key={item}>{item}</p>)}<a href={`/?package_id=${data.id}&destination=${encodeURIComponent(data.destination)}#planner`} className="button" data-testid="package-enquire-button">Enquire Now <ArrowRight size={16} /></a><a href={waUrl(settings.whatsapp, `Hi ${settings.company_name}, I am interested in the ${data.title} package. Please share more details.`)} target="_blank" rel="noreferrer" className="whatsapp-detail" data-testid="package-whatsapp-link"><MessageCircle size={17} /> WhatsApp Us</a></div></section><Gallery images={data.gallery} title={`${data.title} gallery`} /></DetailShell>;
+}
+
+function NotFoundPage() {
+  const settings = useSettings();
+  useTitle("Page not found");
+  return (
+    <DetailShell settings={settings}>
+      <section className="page-head not-found" data-testid="not-found-page">
+        <span className="eyebrow">Error 404</span>
+        <h2>This page wandered<br /><em>off the map.</em></h2>
+        <p>The page you're looking for doesn't exist or may have moved. Let's get you back to somewhere beautiful.</p>
+        <div className="hero-actions" style={{ marginTop: "32px" }}>
+          <Link to="/" className="button" data-testid="notfound-home-button">Back to home <ArrowRight size={16} /></Link>
+          <a href="/#destinations" className="text-link" data-testid="notfound-destinations-link">Browse destinations <ArrowRight size={15} /></a>
+          <a href="/#packages" className="text-link" data-testid="notfound-packages-link">Holiday packages <ArrowRight size={15} /></a>
+        </div>
+      </section>
+      <div style={{ paddingBottom: "90px" }} />
+    </DetailShell>
+  );
 }
 
 import { BlogList, BlogPost } from "@/pages/Blog";
@@ -92,6 +115,7 @@ export default function App() {
         <Route path="/family-holidays" element={<FamilyPage />} />
         <Route path="/corporate-group-travel" element={<CorporatePage />} />
         <Route path="/admin/*" element={<AdminApp />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
